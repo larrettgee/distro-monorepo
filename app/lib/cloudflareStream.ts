@@ -30,7 +30,35 @@ export function streamPlayer(uid: string): string {
   return `https://iframe.cloudflarestream.com/${uid}`;
 }
 
-/** MP4 download (requires downloads enabled on the video). */
-export function streamDownload(uid: string): string {
-  return `https://videodelivery.net/${uid}/downloads/default.mp4`;
+/**
+ * Our cached thumbnail proxy. Fetches the Cloudflare thumbnail once and serves
+ * it from our own cache, so it loads instantly after the first hit. Prefer this
+ * over {@link streamThumbnail} anywhere we render in the UI.
+ */
+export function streamThumbnailCached(uid: string): string {
+  return `/api/stream/${uid}/thumbnail`;
+}
+
+/** Account's public Cloudflare Stream customer subdomain (e.g. `customer-abc123`). */
+const SUBDOMAIN = process.env.NEXT_PUBLIC_CLOUDFLARE_STREAM_SUBDOMAIN;
+
+/**
+ * Direct MP4 download URL on the account's customer subdomain. Cloudflare serves
+ * it with `Content-Disposition: attachment`, so the browser downloads it — no
+ * server round-trip. Requires downloads to have been enabled once for the video
+ * (see {@link streamEnableDownloadEndpoint}, fired at upload time). Returns null
+ * if the subdomain isn't configured. Downloads are NOT served from
+ * `videodelivery.net`, only from the customer subdomain.
+ */
+export function streamDownload(uid: string): string | null {
+  return SUBDOMAIN ? `https://${SUBDOMAIN}.cloudflarestream.com/${uid}/downloads/default.mp4` : null;
+}
+
+/**
+ * Our server endpoint that enables Cloudflare MP4 downloads (idempotent, needs
+ * the secret API token). This is a one-time setup per video — the driver fires
+ * it at upload time so the direct {@link streamDownload} URL works thereafter.
+ */
+export function streamEnableDownloadEndpoint(uid: string): string {
+  return `/api/stream/${uid}/download`;
 }

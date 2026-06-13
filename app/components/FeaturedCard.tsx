@@ -7,7 +7,7 @@ export function FeaturedCard({ c }: { c: Campaign }) {
   return (
     <Link
       href={`/campaign/${c.id}`}
-      className="group flex w-[360px] shrink-0 cursor-pointer gap-3 rounded-xl border border-hairline bg-panel p-3 transition duration-200 hover:-translate-y-0.5 hover:border-distro/40">
+      className="group flex w-[360px] shrink-0 cursor-pointer gap-3 rounded-xl border border-hairline bg-panel p-3 transition-colors duration-200 hover:bg-panel-2">
       <Thumb c={c} className="h-28 w-28 shrink-0 rounded-lg" sizes="112px" />
 
       <div className="flex min-w-0 flex-1 flex-col">

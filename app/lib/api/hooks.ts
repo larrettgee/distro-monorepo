@@ -151,7 +151,23 @@ export function useConnectChannelVerify() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => api.clippers.connectVerify(await getAccessToken()),
-    onSuccess: (profile) => qc.setQueryData(["clipper", "me"], profile),
+    onSuccess: (profile) => {
+      qc.setQueryData(["clipper", "me"], profile);
+      qc.invalidateQueries({ queryKey: ["clipper", "me"] });
+    },
+  });
+}
+
+export function useDisconnectChannel() {
+  const { getAccessToken } = usePrivy();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (channelId: string) =>
+      api.clippers.disconnectChannel(channelId, await getAccessToken()),
+    onSuccess: (profile) => {
+      qc.setQueryData(["clipper", "me"], profile);
+      qc.invalidateQueries({ queryKey: ["clipper", "me"] });
+    },
   });
 }
 

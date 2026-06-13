@@ -8,7 +8,6 @@ import { config } from "@/lib/wagmi";
 import { arcTestnet } from "@/lib/chains";
 import { UploadProvider } from "@/components/upload/UploadProvider";
 import { CreateCampaignProvider } from "@/components/create/CreateCampaignProvider";
-import { ClipperConnectProvider } from "@/components/clipper/ClipperConnectProvider";
 import { createCloudflareStreamDriver } from "@/lib/upload/cloudflareStreamDriver";
 
 const uploadDriver = createCloudflareStreamDriver();
@@ -42,9 +41,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={config}>
           <UploadProvider driver={uploadDriver}>
-            <CreateCampaignProvider>
-              <ClipperConnectProvider>{children}</ClipperConnectProvider>
-            </CreateCampaignProvider>
+            <CreateCampaignProvider>{children}</CreateCampaignProvider>
           </UploadProvider>
         </WagmiProvider>
       </QueryClientProvider>

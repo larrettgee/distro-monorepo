@@ -81,7 +81,7 @@ export function Hero({ items }: { items: Campaign[] }) {
           </span>
 
           <h1 className="mt-4 font-display text-3xl font-bold leading-tight text-cloud sm:text-4xl">
-            Clip it. Spread it. Get paid.
+            Clip it. Share it. Get paid.
           </h1>
 
           <p className="mt-3 max-w-lg text-sm leading-relaxed text-cloud/60">

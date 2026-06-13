@@ -4,9 +4,11 @@ import type {
   CampaignPerformance,
   CampaignStatus,
   ClipperProfile,
+  ClipperStats,
   CreateCampaignInput,
   CreateCampaignResult,
   CreateSubmissionsResult,
+  LeaderboardEntry,
   RegisterAccountInput,
   StartConnectResult,
   Submission,
@@ -104,6 +106,11 @@ export const api = {
       }),
     connectVerify: (token: string | null) =>
       apiFetch<ClipperProfile>("/clippers/channel/connect/verify", { method: "POST", token }),
+    disconnectChannel: (channelId: string, token: string | null) =>
+      apiFetch<ClipperProfile>(`/clippers/channel/${encodeURIComponent(channelId)}`, {
+        method: "DELETE",
+        token,
+      }),
   },
   submissions: {
     create: (campaignId: string, videoUrls: string[], token: string | null) =>

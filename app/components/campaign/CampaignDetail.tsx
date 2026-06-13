@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCampaign, useMyAccount } from "@/lib/api/hooks";
 import { ApiError } from "@/lib/api/client";
 import { usdc } from "@/lib/campaigns";
-import { streamDownload, streamPlayer, streamThumbnail, streamUid } from "@/lib/cloudflareStream";
+import { streamDownload, streamPlayer, streamThumbnailCached, streamUid } from "@/lib/cloudflareStream";
 import { StateBlock, AlertIcon, SearchOffIcon, Spinner } from "@/components/StateBlock";
 import { IconDownload, IconPlay } from "@/components/icons";
 import { YouTubeLogo, TikTokLogo, XLogo, InstagramLogo } from "@/components/create/platformIcons";
@@ -71,6 +71,7 @@ export function CampaignDetail({ id }: { id: string }) {
   const isClipper = account?.type === "clipper";
 
   const uid = streamUid(campaign.sourceContentUrl);
+  const downloadUrl = uid ? streamDownload(uid) : null;
   const rules = (campaign.systemRules ?? "")
     .split("\n")
     .map((r) => r.trim())
@@ -99,7 +100,7 @@ export function CampaignDetail({ id }: { id: string }) {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={streamThumbnail(uid, { width: 1280 })}
+                src={streamThumbnailCached(uid)}
                 alt={`${campaign.title} source content`}
                 className="h-full w-full object-cover"
               />
@@ -116,11 +117,10 @@ export function CampaignDetail({ id }: { id: string }) {
           )}
           <div className="flex items-center justify-between gap-3 border-t border-hairline px-4 py-2.5">
             <span className="text-xs text-cloud/50">Source content</span>
-            {uid && (
+            {downloadUrl && (
               <a
-                href={streamDownload(uid)}
-                target="_blank"
-                rel="noreferrer"
+                href={downloadUrl}
+                download
                 className="inline-flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs font-medium text-cloud/80 transition hover:border-white/25 hover:text-cloud"
               >
                 <IconDownload size={15} />

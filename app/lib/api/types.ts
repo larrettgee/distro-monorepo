@@ -65,10 +65,20 @@ export type CampaignPerformance = {
   closed: boolean | null;
 };
 
+export type SocialPlatform = "youtube" | "x" | "tiktok" | "instagram";
+
+export type ConnectedChannel = {
+  platform: string;
+  channelId: string;
+  handle: string | null;
+  title: string | null;
+  thumbnailUrl: string | null;
+  connectedAt: string;
+};
+
 export type ClipperProfile = {
   connected: boolean;
-  youtubeChannelId: string | null;
-  youtubeHandle: string | null;
+  channels: ConnectedChannel[];
   pendingCode: string | null;
 };
 
@@ -114,6 +124,24 @@ export type YoutubeVideo = {
   likeCount: number | null;
   commentCount: number | null;
   channel: YoutubeChannel;
+};
+
+export type LeaderboardEntry = {
+  rank: number;
+  username: string;
+  walletAddress: string;
+  totalViews: number;
+  clipCount: number;
+  /** Estimated gross USDC (views priced at each campaign's per-1k rate). */
+  estimatedEarningsUsdc: number;
+};
+
+export type ClipperStats = {
+  rank: number | null;
+  totalViews: number;
+  clipCount: number;
+  estimatedEarningsUsdc: number;
+  totalClippers: number;
 };
 
 export type WorldIdContext = {

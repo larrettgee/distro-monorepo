@@ -24,7 +24,7 @@ export function Thumb({
         alt={c.brand}
         fill
         sizes={sizes ?? "320px"}
-        className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+        className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
       />
       <span className="absolute left-2.5 top-2.5 rounded-md bg-black/65 px-2 py-0.5 text-[11px] font-semibold text-cloud backdrop-blur-sm">
         {c.status}

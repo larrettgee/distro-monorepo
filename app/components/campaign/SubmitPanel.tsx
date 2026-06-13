@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMyAccount, useClipperProfile, useSubmitVideos, useSubmissions } from "@/lib/api/hooks";
-import { useClipperConnect } from "@/components/clipper/ClipperConnectProvider";
 import { SubmissionsList } from "./SubmissionsList";
 import { IconCheck } from "@/components/icons";
 
 export function SubmitPanel({ campaignId }: { campaignId: string }) {
   const { data: account } = useMyAccount();
   const { data: profile } = useClipperProfile();
-  const { openConnect } = useClipperConnect();
   const submit = useSubmitVideos(campaignId);
   const { data: submissions } = useSubmissions(campaignId);
   const [text, setText] = useState("");
@@ -29,13 +28,13 @@ export function SubmitPanel({ campaignId }: { campaignId: string }) {
 
         {!connected ? (
           <div className="rounded-xl border border-hairline bg-panel p-4">
-            <p className="text-sm text-cloud/70">Connect your YouTube channel to submit clips.</p>
-            <button
-              onClick={openConnect}
-              className="mt-3 rounded-lg bg-distro px-4 py-2 text-sm font-semibold text-ink transition hover:bg-mint active:scale-[0.98]"
+            <p className="text-sm text-cloud/70">Connect a YouTube channel to submit clips.</p>
+            <Link
+              href="/socials"
+              className="mt-3 inline-block rounded-lg bg-distro px-4 py-2 text-sm font-semibold text-ink transition hover:bg-mint active:scale-[0.98]"
             >
-              Connect YouTube
-            </button>
+              Manage socials
+            </Link>
           </div>
         ) : !verified ? (
           <div className="rounded-xl border border-hairline bg-panel p-4 text-sm text-cloud/70">

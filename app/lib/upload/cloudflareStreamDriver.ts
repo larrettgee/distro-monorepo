@@ -1,4 +1,5 @@
 import * as tus from "tus-js-client";
+import { streamEnableDownloadEndpoint } from "@/lib/cloudflareStream";
 import type { UploadAsset, UploadDriver } from "./types";
 
 export type CloudflareStreamOptions = {
@@ -52,6 +53,13 @@ export function createCloudflareStreamDriver(opts: CloudflareStreamOptions = {})
                 ? `https://${opts.customerSubdomain}.cloudflarestream.com/${mediaId}/iframe`
                 : `https://iframe.cloudflarestream.com/${mediaId}`
               : undefined;
+            // Enable MP4 downloads now (fire-and-forget, one-time, token-gated)
+            // so the direct customer-subdomain download URL works by the time a
+            // brand opens the campaign. The actual download is then served
+            // straight from Cloudflare, no server round-trip.
+            if (mediaId) {
+              void fetch(streamEnableDownloadEndpoint(mediaId), { method: "POST" }).catch(() => {});
+            }
             resolve({
               id: mediaId ?? "unknown",
               url,
