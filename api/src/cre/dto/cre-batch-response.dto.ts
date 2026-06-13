@@ -27,7 +27,7 @@ export class JobBatchDto implements JobBatch {
   @ApiProperty({
     description:
       'EscrowViewsReporter (job operator) the CRE submits the report to.',
-    example: '0x78203f4Dd20968808cFD05A094e9cCfF4E781089',
+    example: '0x716f3b0b885Cf0Edd1Be17E1DF62560acbCE212F',
   })
   reporterAddress!: string;
 
