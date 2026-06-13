@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useCampaign, useMyAccount } from "@/lib/api/hooks";
+import { useCampaign, useCampaignPerformance, useMyAccount } from "@/lib/api/hooks";
 import { ApiError } from "@/lib/api/client";
 import { usdc } from "@/lib/campaigns";
 import { streamPlayer, streamThumbnailCached, streamUid } from "@/lib/cloudflareStream";
@@ -25,6 +25,7 @@ const PLATFORM_LOGOS: Record<string, (p: { size?: number; className?: string }) 
 export function CampaignDetail({ id }: { id: string }) {
   const { data: campaign, isLoading, isError, error, refetch, isFetching } = useCampaign(id);
   const { data: account } = useMyAccount();
+  const { data: perf } = useCampaignPerformance(id);
 
   if (isLoading) {
     return (
@@ -139,7 +140,11 @@ export function CampaignDetail({ id }: { id: string }) {
         {/* Reward pool payout progress */}
         <div className="mt-5 rounded-xl border border-hairline bg-panel px-4 py-3.5">
           <p className="mb-2 text-xs font-medium text-cloud/50">Pool paid out</p>
-          <PoolProgress paid={campaign.paidUsdc} budget={campaign.budgetUsdc} />
+          <PoolProgress
+            paid={campaign.paidUsdc}
+            budget={campaign.budgetUsdc}
+            allocated={perf?.allocatedUsdc}
+          />
         </div>
 
         {rules.length > 0 && (
