@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { type Campaign, usdcCompact } from "@/lib/campaigns";
 import { Thumb } from "./Thumb";
+import { PoolProgress } from "./PoolProgress";
 
 export function CampaignCard({ c }: { c: Campaign }) {
-  const pct = Math.min(100, Math.round((c.paidOut / c.rewardPool) * 100));
-
   return (
     <Link
       href={`/campaign/${c.id}`}
@@ -32,13 +31,7 @@ export function CampaignCard({ c }: { c: Campaign }) {
         </div>
 
         <div className="mt-2.5">
-          <div className="mb-1 flex justify-between text-[11px] text-cloud/40">
-            <span>{usdcCompact(c.paidOut)} paid</span>
-            <span>{c.clippers} clippers</span>
-          </div>
-          <div className="h-1 overflow-hidden rounded-full bg-panel-2">
-            <div className="h-full rounded-full bg-network" style={{ width: `${pct}%` }} />
-          </div>
+          <PoolProgress paid={c.paidOut} budget={c.rewardPool} size="sm" />
         </div>
 
         <div className="mt-3.5 flex flex-wrap gap-1.5">

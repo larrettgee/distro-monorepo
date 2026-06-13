@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { type Campaign, usdcCompact } from "@/lib/campaigns";
 import { Thumb } from "./Thumb";
+import { PoolProgress } from "./PoolProgress";
 
 const shadow = { textShadow: "0 1px 10px rgba(0,0,0,0.9)" };
 
@@ -20,6 +21,9 @@ export function TrendingCard({ c }: { c: Campaign }) {
       <h3 className="mt-2.5 line-clamp-2 text-sm leading-snug text-cloud/75 transition-colors group-hover:text-cloud">
         {c.title}
       </h3>
+      <div className="mt-2">
+        <PoolProgress paid={c.paidOut} budget={c.rewardPool} size="sm" showLabels={false} />
+      </div>
     </Link>
   );
 }

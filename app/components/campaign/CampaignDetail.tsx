@@ -9,6 +9,7 @@ import { streamPlayer, streamThumbnailCached, streamUid } from "@/lib/cloudflare
 import { StateBlock, AlertIcon, SearchOffIcon, Spinner } from "@/components/StateBlock";
 import { IconPlay } from "@/components/icons";
 import { YouTubeLogo, TikTokLogo, XLogo, InstagramLogo } from "@/components/create/platformIcons";
+import { PoolProgress } from "@/components/PoolProgress";
 import { DownloadButton } from "./DownloadButton";
 import { PerformancePanel } from "./PerformancePanel";
 import { SubmitPanel } from "./SubmitPanel";
@@ -106,7 +107,7 @@ export function CampaignDetail({ id }: { id: string }) {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-hairline bg-panel px-4 py-3">
+          <div className="col-span-2 rounded-xl border border-hairline bg-panel px-4 py-3 sm:col-span-1">
             <p className="text-xs text-cloud/50">Reward pool</p>
             <p className="mt-1 font-display text-xl font-bold text-distro">{usdc(campaign.budgetUsdc)}</p>
           </div>
@@ -133,6 +134,12 @@ export function CampaignDetail({ id }: { id: string }) {
               })}
             </div>
           </div>
+        </div>
+
+        {/* Reward pool payout progress */}
+        <div className="mt-5 rounded-xl border border-hairline bg-panel px-4 py-3.5">
+          <p className="mb-2 text-xs font-medium text-cloud/50">Pool paid out</p>
+          <PoolProgress paid={campaign.paidUsdc} budget={campaign.budgetUsdc} />
         </div>
 
         {rules.length > 0 && (

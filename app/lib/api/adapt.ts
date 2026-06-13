@@ -31,7 +31,7 @@ export function adaptCampaign(c: ApiCampaign): UiCampaign {
     image: uid ? streamThumbnailCached(uid) : `https://picsum.photos/seed/${c.id}/640/440`,
     platforms: c.platforms.map((p) => PLATFORM_MAP[p.toLowerCase()]).filter(Boolean) as Platform[],
     rewardPool: c.budgetUsdc,
-    paidOut: 0,
+    paidOut: c.paidUsdc ?? 0,
     ratePer1k: c.ratePerThousandViews,
     timeLeft: statusLabel(c.status),
     clippers: 0,

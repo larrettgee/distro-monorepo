@@ -47,7 +47,7 @@ export function SidebarNav() {
         {/* Discovery — relevant to clippers and signed-out visitors, not brands.
             "Campaigns" (/#explore) is omitted: it lands on the same home view. */}
         {!isBrand && (
-          <Link href="/#trending" className={`${link} ${idle}`}>
+          <Link href="/trending" className={cls("/trending")}>
             <IconTrending size={19} />
             Trending
           </Link>
@@ -90,12 +90,19 @@ export function SidebarNav() {
         )}
       </nav>
 
-      {/* Create campaign is a brand action — pinned to the bottom. */}
+      {/* Create campaign is a brand action — pinned toward the bottom. */}
       {!isClipper && (
         <CreateButton variant="primary" className="mt-auto w-full px-3 py-2.5">
           Create campaign
         </CreateButton>
       )}
+
+      {/* Tagline always sits at the very bottom of the sidebar. */}
+      <p
+        className={`${isClipper ? "mt-auto" : "mt-3"} px-2 text-xs leading-relaxed text-cloud/40`}
+      >
+        Distribution is everything.
+      </p>
     </>
   );
 }

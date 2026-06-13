@@ -26,6 +26,7 @@ export type Campaign = {
   platforms: string[];
   systemRules: string;
   budgetUsdc: number;
+  paidUsdc: number;
   ratePerThousandViews: number;
   status: CampaignStatus;
   onchainJobId: number | null;

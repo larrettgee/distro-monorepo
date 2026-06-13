@@ -10,10 +10,6 @@ export function Sidebar() {
       </Link>
 
       <SidebarNav />
-
-      <p className="mt-4 px-2 text-xs leading-relaxed text-cloud/40">
-        Distribution is everything.
-      </p>
     </aside>
   );
 }

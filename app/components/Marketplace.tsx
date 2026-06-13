@@ -6,7 +6,6 @@ import { NetworkGuard } from "./NetworkGuard";
 import { Hero } from "./Hero";
 import { ScrollRow } from "./ScrollRow";
 import { FeaturedCard } from "./FeaturedCard";
-import { TrendingCard } from "./TrendingCard";
 import { OnboardingGate } from "./onboarding/OnboardingGate";
 import { StateBlock, AlertIcon, InboxIcon, Spinner } from "./StateBlock";
 import { useCampaigns } from "@/lib/api/hooks";
@@ -18,7 +17,6 @@ export function Marketplace() {
 
   const items = useMemo(() => (data ?? []).map(adaptCampaign), [data]);
   const featured = items.slice(0, 6);
-  const trending = items.slice(0, 8);
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
@@ -62,19 +60,11 @@ export function Marketplace() {
         )}
 
         {items.length > 0 && (
-          <>
-            <ScrollRow id="top" title="Top campaigns">
-              {featured.map((c) => (
-                <FeaturedCard key={c.id} c={c} />
-              ))}
-            </ScrollRow>
-
-            <ScrollRow id="trending" title="Trending now">
-              {trending.map((c) => (
-                <TrendingCard key={c.id} c={c} />
-              ))}
-            </ScrollRow>
-          </>
+          <ScrollRow id="top" title="Top campaigns">
+            {featured.map((c) => (
+              <FeaturedCard key={c.id} c={c} />
+            ))}
+          </ScrollRow>
         )}
       </main>
     </div>
