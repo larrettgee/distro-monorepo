@@ -9,8 +9,14 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
  * @title DistroEscrow
  * @notice Escrow for a clipping marketplace.
  *
- * A brand creates a job, funding it with an ERC-20 budget and setting a
- * price per thousand views (CPM). Clippers go and earn views; a trusted
+ * A brand creates a job, funding it either with an ERC-20 budget (createJob)
+ * or with the chain's native currency (createJobNative) — on Arc the native
+ * gas token is USDC. Internally a job's `token` is the ERC-20 address, or the
+ * `NATIVE` sentinel (address(0)) for native funding; payouts follow the same
+ * path the job was funded with.
+ *
+ * The brand sets a price per thousand views (CPM). Clippers go and earn views;
+ * a trusted
  * operator/oracle reports those views on-chain. Reported view counts are
  * cumulative per recipient — each report credits only the new views since
  * the last report with `deltaViews * pricePerThousandViews / 1000`, drawing
@@ -50,6 +56,9 @@ contract DistroEscrow is ReentrancyGuard {
     /// @notice Divisor turning a view count into a budget draw (CPM basis).
     uint256 public constant VIEWS_PER_UNIT = 1000;
 
+    /// @notice Sentinel `token` value marking a job funded with native currency.
+    address public constant NATIVE = address(0);
+
     /// @notice All jobs, keyed by id.
     mapping(uint256 => Job) public jobs;
 
@@ -74,17 +83,8 @@ contract DistroEscrow is ReentrancyGuard {
         uint256 pricePerThousandViews,
         uint256 budget
     );
-    event ViewsRecorded(
-        uint256 indexed id,
-        address indexed recipient,
-        uint256 totalViews,
-        uint256 credited
-    );
-    event Claimed(
-        uint256 indexed id,
-        address indexed recipient,
-        uint256 amount
-    );
+    event ViewsRecorded(uint256 indexed id, address indexed recipient, uint256 totalViews, uint256 credited);
+    event Claimed(uint256 indexed id, address indexed recipient, uint256 amount);
     event JobClosed(uint256 indexed id, uint256 refunded);
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -99,6 +99,7 @@ contract DistroEscrow is ReentrancyGuard {
     error NotOperator();
     error LengthMismatch();
     error NothingOwed();
+    error TransferFailed();
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  Views
@@ -130,14 +131,14 @@ contract DistroEscrow is ReentrancyGuard {
      * @param budget                 Tokens to pull from the caller.
      * @return id                    Identifier of the created job.
      */
-    function createJob(
-        address operator,
-        address token,
-        uint256 pricePerThousandViews,
-        uint256 budget
-    ) external nonReentrant returns (uint256 id) {
-        if (operator == address(0) || token == address(0))
+    function createJob(address operator, address token, uint256 pricePerThousandViews, uint256 budget)
+        external
+        nonReentrant
+        returns (uint256 id)
+    {
+        if (operator == address(0) || token == address(0)) {
             revert InvalidAddress();
+        }
         if (pricePerThousandViews == 0 || budget == 0) revert InvalidAmount();
 
         uint256 preBalance = IERC20(token).balanceOf(address(this));
@@ -156,14 +157,39 @@ contract DistroEscrow is ReentrancyGuard {
             closed: false
         });
 
-        emit JobCreated(
-            id,
-            msg.sender,
-            operator,
-            token,
-            pricePerThousandViews,
-            received
-        );
+        emit JobCreated(id, msg.sender, operator, token, pricePerThousandViews, received);
+    }
+
+    /**
+     * @notice Create a job funded with the chain's native currency.
+     * @dev    The budget is `msg.value` (on Arc the native token is USDC).
+     *         The job's `token` is recorded as NATIVE; payouts are sent as
+     *         native transfers.
+     * @param operator               Address allowed to record views.
+     * @param pricePerThousandViews  Payout per 1000 views, in native wei.
+     * @return id                    Identifier of the created job.
+     */
+    function createJobNative(address operator, uint256 pricePerThousandViews)
+        external
+        payable
+        nonReentrant
+        returns (uint256 id)
+    {
+        if (operator == address(0)) revert InvalidAddress();
+        if (pricePerThousandViews == 0 || msg.value == 0) revert InvalidAmount();
+
+        id = nextJobId++;
+        jobs[id] = Job({
+            brand: msg.sender,
+            operator: operator,
+            token: NATIVE,
+            pricePerThousandViews: pricePerThousandViews,
+            budget: msg.value,
+            allocated: 0,
+            closed: false
+        });
+
+        emit JobCreated(id, msg.sender, operator, NATIVE, pricePerThousandViews, msg.value);
     }
 
     /**
@@ -178,11 +204,7 @@ contract DistroEscrow is ReentrancyGuard {
      * @param recipients Recipient addresses (e.g. clipper wallets).
      * @param views      Cumulative view counts, parallel to `recipients`.
      */
-    function recordViews(
-        uint256 id,
-        address[] calldata recipients,
-        uint256[] calldata views
-    ) external {
+    function recordViews(uint256 id, address[] calldata recipients, uint256[] calldata views) external {
         Job storage job = jobs[id];
         if (job.brand == address(0)) revert UnknownJob();
         if (job.closed) revert JobIsClosed();
@@ -237,7 +259,7 @@ contract DistroEscrow is ReentrancyGuard {
         if (amount == 0) revert NothingOwed();
 
         owed[id][recipient] = 0;
-        IERC20(jobs[id].token).safeTransfer(recipient, amount);
+        _payout(jobs[id].token, recipient, amount);
 
         emit Claimed(id, recipient, amount);
     }
@@ -258,9 +280,24 @@ contract DistroEscrow is ReentrancyGuard {
         uint256 refund = job.budget - job.allocated;
         if (refund > 0) {
             job.budget = job.allocated;
-            IERC20(job.token).safeTransfer(job.brand, refund);
+            _payout(job.token, job.brand, refund);
         }
 
         emit JobClosed(id, refund);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  Internal
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// @dev Sends `amount` of `token` to `to`, using a native transfer when
+    ///      `token` is the NATIVE sentinel and an ERC-20 transfer otherwise.
+    function _payout(address token, address to, uint256 amount) internal {
+        if (token == NATIVE) {
+            (bool ok,) = payable(to).call{value: amount}("");
+            if (!ok) revert TransferFailed();
+        } else {
+            IERC20(token).safeTransfer(to, amount);
+        }
     }
 }

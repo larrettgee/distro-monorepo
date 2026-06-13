@@ -284,4 +284,70 @@ contract DistroEscrowTest is Test {
         assertLe(escrow.owed(id, clipperA), BUDGET);
         assertLe(escrow.getJob(id).allocated, BUDGET);
     }
+
+    // ── native funding (Arc: USDC is the gas token) ──────────────────────────────
+
+    uint256 internal constant NATIVE_BUDGET = 10 ether;
+    uint256 internal constant NATIVE_CPM = 0.002 ether; // per 1000 views
+
+    function _createNativeJob() internal returns (uint256 id) {
+        vm.deal(brand, NATIVE_BUDGET);
+        vm.prank(brand);
+        id = escrow.createJobNative{value: NATIVE_BUDGET}(operator, NATIVE_CPM);
+    }
+
+    function test_CreateJobNative_HoldsNativeBudget() public {
+        uint256 id = _createNativeJob();
+
+        assertEq(address(escrow).balance, NATIVE_BUDGET);
+        DistroEscrow.Job memory job = escrow.getJob(id);
+        assertEq(job.brand, brand);
+        assertEq(job.operator, operator);
+        assertEq(job.token, escrow.NATIVE());
+        assertEq(job.token, address(0));
+        assertEq(job.pricePerThousandViews, NATIVE_CPM);
+        assertEq(job.budget, NATIVE_BUDGET);
+        assertEq(escrow.remaining(id), NATIVE_BUDGET);
+    }
+
+    function test_CreateJobNative_RevertsOnZeroValue() public {
+        vm.prank(brand);
+        vm.expectRevert(DistroEscrow.InvalidAmount.selector);
+        escrow.createJobNative{value: 0}(operator, NATIVE_CPM);
+    }
+
+    function test_CreateJobNative_RevertsOnZeroOperator() public {
+        vm.deal(brand, NATIVE_BUDGET);
+        vm.prank(brand);
+        vm.expectRevert(DistroEscrow.InvalidAddress.selector);
+        escrow.createJobNative{value: NATIVE_BUDGET}(address(0), NATIVE_CPM);
+    }
+
+    function test_Native_RecordAndClaim_PaysNative() public {
+        uint256 id = _createNativeJob();
+        _record(id, clipperA, 100_000); // 100k * 0.002e18 / 1000 = 0.2 ether
+
+        uint256 expected = (100_000 * NATIVE_CPM) / escrow.VIEWS_PER_UNIT();
+        assertEq(expected, 0.2 ether);
+        assertEq(escrow.owed(id, clipperA), 0.2 ether);
+
+        uint256 before = clipperA.balance;
+        vm.prank(stranger);
+        escrow.claim(id, clipperA);
+        assertEq(clipperA.balance - before, 0.2 ether);
+        assertEq(escrow.owed(id, clipperA), 0);
+    }
+
+    function test_Native_CloseJob_RefundsNativeToBrand() public {
+        uint256 id = _createNativeJob();
+        _record(id, clipperA, 100_000); // allocate 0.2 ether
+
+        uint256 before = brand.balance;
+        vm.prank(brand);
+        escrow.closeJob(id);
+
+        assertEq(brand.balance - before, NATIVE_BUDGET - 0.2 ether);
+        assertEq(escrow.remaining(id), 0);
+        assertTrue(escrow.getJob(id).closed);
+    }
 }
