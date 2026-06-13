@@ -41,6 +41,14 @@ export class Campaign {
   @Prop({ required: true })
   budgetUsdc!: number;
 
+  /**
+   * USDC paid out / allocated to clippers so far (display). Denormalized from
+   * the escrow's `allocated`, updated as views are recorded on-chain, so cards
+   * and lists can show payout progress without per-item chain reads.
+   */
+  @Prop({ default: 0 })
+  paidUsdc!: number;
+
   @Prop({ required: true })
   ratePerThousandViews!: number;
 

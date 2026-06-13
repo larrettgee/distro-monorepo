@@ -211,6 +211,7 @@ export class CampaignsService {
       platforms: c.platforms,
       systemRules: c.systemRules,
       budgetUsdc: c.budgetUsdc,
+      paidUsdc: c.paidUsdc ?? 0,
       ratePerThousandViews: c.ratePerThousandViews,
       status: c.status,
       onchainJobId: c.onchainJobId ?? null,

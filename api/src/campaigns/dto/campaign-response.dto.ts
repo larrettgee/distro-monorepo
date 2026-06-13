@@ -32,6 +32,9 @@ export class CampaignResponseDto {
   @ApiProperty({ description: 'Total budget in USDC.' })
   budgetUsdc!: number;
 
+  @ApiProperty({ description: 'USDC paid out / allocated to clippers so far.' })
+  paidUsdc!: number;
+
   @ApiProperty({ description: 'USDC per 1,000 views.' })
   ratePerThousandViews!: number;
 
