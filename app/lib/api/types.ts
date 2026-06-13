@@ -144,6 +144,32 @@ export type ClipperStats = {
   totalClippers: number;
 };
 
+export type ClaimableJob = {
+  campaignId: string;
+  campaignTitle: string;
+  jobId: number;
+  owedUsdc: number;
+};
+
+export type AccountOverview = {
+  type: AccountType | null;
+  username: string | null;
+  verificationStatus: VerificationStatus | null;
+  walletAddress: string | null;
+  escrowAddress: string;
+  chainId: number;
+  // Brand
+  campaignsCount: number | null;
+  totalSpentUsdc: number | null;
+  inEscrowUsdc: number | null;
+  // Clipper
+  totalViews: number | null;
+  clipCount: number | null;
+  estimatedEarningsUsdc: number | null;
+  claimableUsdc: number | null;
+  claimable: ClaimableJob[] | null;
+};
+
 export type WorldIdContext = {
   appId: string;
   action: string;

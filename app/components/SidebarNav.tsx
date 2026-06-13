@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useMyAccount, useClipperProfile } from "@/lib/api/hooks";
 import { CreateButton } from "./CreateButton";
+import { VerificationMark } from "./VerificationMark";
 import {
   IconHome,
   IconCampaigns,
   IconTrending,
   IconTrophy,
   IconUsers,
+  IconUser,
 } from "./icons";
 
 const link =
@@ -70,11 +72,22 @@ export function SidebarNav() {
             )}
           </Link>
         )}
+
+        {/* Account sits with the rest of the nav, carrying the verification mark. */}
+        {account?.initialized && account.verificationStatus && (
+          <Link href="/account" className={`${link} ${idle}`}>
+            <IconUser size={19} />
+            Account
+            <span className="ml-auto">
+              <VerificationMark status={account.verificationStatus} size={16} />
+            </span>
+          </Link>
+        )}
       </nav>
 
-      {/* Creating a campaign is a brand action — hide it from clippers. */}
+      {/* Create campaign is a brand action — pinned to the bottom. */}
       {!isClipper && (
-        <CreateButton variant="primary" className="mt-6 w-full px-3 py-2.5">
+        <CreateButton variant="primary" className="mt-auto w-full px-3 py-2.5">
           Create campaign
         </CreateButton>
       )}

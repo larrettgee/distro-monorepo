@@ -1,5 +1,6 @@
 import type {
   Account,
+  AccountOverview,
   Campaign,
   CampaignPerformance,
   CampaignStatus,
@@ -78,8 +79,16 @@ async function apiFetch<T>(path: string, opts: Opts = {}): Promise<T> {
 export const api = {
   accounts: {
     me: (token: string | null) => apiFetch<Account>("/accounts/me", { token }),
+    overview: (token: string | null) =>
+      apiFetch<AccountOverview>("/accounts/overview", { token }),
     register: (input: RegisterAccountInput, token: string | null) =>
       apiFetch<Account>("/accounts/register", { method: "POST", body: input, token }),
+    updateUsername: (username: string, token: string | null) =>
+      apiFetch<Account>("/accounts/me/username", {
+        method: "PATCH",
+        body: { username },
+        token,
+      }),
     worldIdContext: (token: string | null) =>
       apiFetch<WorldIdContext>("/accounts/worldid/context", { token }),
     verifyWorldId: (proof: unknown, token: string | null) =>

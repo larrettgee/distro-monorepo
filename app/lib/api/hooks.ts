@@ -26,6 +26,30 @@ export function useRegisterAccount() {
   });
 }
 
+/** Role-aware account dashboard: spend / earnings / on-chain claimable. */
+export function useAccountOverview() {
+  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { data: account } = useMyAccount();
+  return useQuery({
+    queryKey: ["account", "overview"],
+    enabled: ready && authenticated && !!account?.initialized,
+    queryFn: async () => api.accounts.overview(await getAccessToken()),
+  });
+}
+
+export function useUpdateUsername() {
+  const { getAccessToken } = usePrivy();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (username: string) =>
+      api.accounts.updateUsername(username, await getAccessToken()),
+    onSuccess: (account) => {
+      qc.setQueryData(["account", "me"], account);
+      qc.invalidateQueries({ queryKey: ["account", "overview"] });
+    },
+  });
+}
+
 /** Fetch a fresh, signed World ID rp_context (expires ~5 min) to open the widget. */
 export function useWorldIdContext() {
   const { getAccessToken } = usePrivy();

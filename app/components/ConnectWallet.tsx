@@ -14,49 +14,12 @@ import { isAddress, parseUnits } from "viem";
 import { arcTestnet } from "@/lib/chains";
 import { ArcMark } from "@/components/ArcMark";
 import { VerifyWorldId } from "@/components/VerifyWorldId";
+import { VerificationMark } from "@/components/VerificationMark";
 import { IconCopy, IconCheck, IconLogout } from "@/components/icons";
 import { useMyAccount } from "@/lib/api/hooks";
 
 function shortAddress(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
-
-/** World ID status worn on the account button: a shield, marked + colored by state. */
-function VerifyMark({ status }: { status: "verified" | "unverified" }) {
-  const verified = status === "verified";
-  return (
-    <span
-      title={
-        verified
-          ? "World ID verified"
-          : "Unverified — verify with World ID to unlock payouts"
-      }
-      aria-label={verified ? "World ID verified" : "Account unverified"}
-      className={verified ? "text-distro" : "text-red-400"}
-    >
-      <svg
-        width="15"
-        height="15"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M12 2 4 5v6c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V5l-8-3Z" />
-        {verified ? (
-          <path d="m9 12 2 2 4-4" />
-        ) : (
-          <>
-            <line x1="12" y1="8" x2="12" y2="12.5" />
-            <circle cx="12" cy="15.5" r="0.6" fill="currentColor" stroke="none" />
-          </>
-        )}
-      </svg>
-    </span>
-  );
 }
 
 export function ConnectWallet() {
@@ -198,7 +161,7 @@ export function ConnectWallet() {
         )}
         {account?.username ?? (address ? shortAddress(address) : "Account")}
         {account?.initialized && account.verificationStatus && (
-          <VerifyMark status={account.verificationStatus} />
+          <VerificationMark status={account.verificationStatus} />
         )}
       </button>
 
