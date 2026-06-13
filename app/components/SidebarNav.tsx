@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useMyAccount, useClipperProfile } from "@/lib/api/hooks";
 import { CreateButton } from "./CreateButton";
 import { VerificationMark } from "./VerificationMark";
@@ -26,15 +27,19 @@ const idle = "text-cloud/60 hover:bg-panel-2 hover:text-cloud";
 export function SidebarNav() {
   const { data: account } = useMyAccount();
   const { data: profile } = useClipperProfile();
+  const pathname = usePathname();
 
   const isBrand = account?.initialized && account.type === "brand";
   const isClipper = account?.initialized && account.type === "clipper";
   const channelCount = profile?.channels?.length ?? 0;
 
+  const cls = (href: string) =>
+    `${link} ${pathname === href ? active : idle}`;
+
   return (
     <>
       <nav className="mt-8 flex flex-col gap-1">
-        <Link href="/" className={`${link} ${active}`}>
+        <Link href="/" className={cls("/")}>
           <IconHome size={19} />
           Home
         </Link>
@@ -49,20 +54,20 @@ export function SidebarNav() {
         )}
 
         {/* Leaderboard is relevant to everyone — climbing it (clippers) and scouting talent (brands). */}
-        <Link href="/leaderboard" className={`${link} ${idle}`}>
+        <Link href="/leaderboard" className={cls("/leaderboard")}>
           <IconTrophy size={19} />
           Leaderboard
         </Link>
 
         {isBrand && (
-          <Link href="/dashboard" className={`${link} ${idle}`}>
+          <Link href="/dashboard" className={cls("/dashboard")}>
             <IconCampaigns size={19} />
             My campaigns
           </Link>
         )}
 
         {isClipper && (
-          <Link href="/socials" className={`${link} ${idle}`}>
+          <Link href="/socials" className={cls("/socials")}>
             <IconUsers size={19} />
             Manage socials
             {channelCount > 0 && (
@@ -75,7 +80,7 @@ export function SidebarNav() {
 
         {/* Account sits with the rest of the nav, carrying the verification mark. */}
         {account?.initialized && account.verificationStatus && (
-          <Link href="/account" className={`${link} ${idle}`}>
+          <Link href="/account" className={cls("/account")}>
             <IconUser size={19} />
             Account
             <span className="ml-auto">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useCampaign, useMyAccount } from "@/lib/api/hooks";
 import { ApiError } from "@/lib/api/client";
@@ -92,24 +93,7 @@ export function CampaignDetail({ id }: { id: string }) {
         {/* Source content preview */}
         <div className="mt-5 overflow-hidden rounded-xl border border-hairline bg-panel">
           {uid ? (
-            <a
-              href={streamPlayer(uid)}
-              target="_blank"
-              rel="noreferrer"
-              className="group relative block aspect-video w-full"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={streamThumbnailCached(uid)}
-                alt={`${campaign.title} source content`}
-                className="h-full w-full object-cover"
-              />
-              <span className="absolute inset-0 grid place-items-center bg-ink/30 transition group-hover:bg-ink/20">
-                <span className="grid h-14 w-14 place-items-center rounded-full bg-ink/70 text-cloud backdrop-blur-sm transition group-hover:scale-110">
-                  <IconPlay size={26} />
-                </span>
-              </span>
-            </a>
+            <SourcePlayer uid={uid} title={campaign.title} />
           ) : (
             <div className="grid aspect-video w-full place-items-center text-sm text-cloud/40">
               No preview available
@@ -178,5 +162,42 @@ export function CampaignDetail({ id }: { id: string }) {
         </p>
       )}
     </div>
+  );
+}
+
+/** Source content: thumbnail with a play button that swaps to an inline player. */
+function SourcePlayer({ uid, title }: { uid: string; title: string }) {
+  const [playing, setPlaying] = useState(false);
+
+  if (playing) {
+    return (
+      <iframe
+        src={`${streamPlayer(uid)}?autoplay=true`}
+        title={`${title} source content`}
+        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen
+        className="aspect-video w-full"
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setPlaying(true)}
+      className="group relative block aspect-video w-full"
+      aria-label="Play source content"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={streamThumbnailCached(uid)}
+        alt={`${title} source content`}
+        className="h-full w-full object-cover"
+      />
+      <span className="absolute inset-0 grid place-items-center bg-ink/30 transition group-hover:bg-ink/20">
+        <span className="grid h-14 w-14 place-items-center rounded-full bg-ink/70 text-cloud backdrop-blur-sm transition group-hover:scale-110">
+          <IconPlay size={26} />
+        </span>
+      </span>
+    </button>
   );
 }

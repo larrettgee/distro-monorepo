@@ -51,6 +51,25 @@ export function CreateCampaignModal({ open, onClose }: { open: boolean; onClose:
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState<string | null>(null);
 
+  // Reset to a clean form whenever the modal (re)opens, so a prior "Campaign is
+  // live" success screen — and the old field values — never linger next time.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setTitle("");
+      setDescription("");
+      setBudget("");
+      setRate("");
+      setPlatforms(["youtube"]);
+      setRules([]);
+      setCustomRules("");
+      setAsset(null);
+      setPhase("form");
+      setError(null);
+    }
+  }
+
   const isBrand = account?.type === "brand";
   const sourceContentUrl = asset ? (asset.url ?? `https://iframe.cloudflarestream.com/${asset.id}`) : "";
   const budgetNum = Number(budget);
