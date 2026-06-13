@@ -30,7 +30,12 @@ export type Campaign = {
 };
 
 export const usdc = (n: number) =>
-  n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  n.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 /**
  * Compact USD, e.g. $59.6K. Computed manually rather than via `Intl` compact
@@ -40,5 +45,5 @@ export const usdc = (n: number) =>
 export const usdcCompact = (n: number) => {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
   if (n >= 1_000) return `$${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
-  return `$${n}`;
+  return `$${n.toFixed(2)}`;
 };
