@@ -68,7 +68,10 @@ export function ConnectWallet() {
 
   if (!authenticated) {
     return (
-      <button onClick={login} className={`${base} bg-distro text-ink hover:bg-mint`}>
+      <button
+        onClick={login}
+        className={`${base} bg-distro text-ink hover:bg-mint active:scale-[0.98]`}
+      >
         Sign in
       </button>
     );
@@ -113,7 +116,7 @@ export function ConnectWallet() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`${base} flex items-center gap-2 border border-hairline bg-panel text-cloud hover:border-network`}
+        className={`${base} flex items-center gap-2 border border-hairline bg-panel text-cloud transition-colors hover:border-white/20`}
       >
         <span
           className={`h-2 w-2 rounded-full ${onArc ? "bg-distro" : "bg-amber-400"}`}
@@ -156,20 +159,20 @@ export function ConnectWallet() {
                 onChange={(e) => setTo(e.target.value)}
                 placeholder="Recipient address (0x…)"
                 spellCheck={false}
-                className="w-full rounded-lg border border-hairline bg-ink px-3 py-2 font-mono text-xs text-cloud outline-none placeholder:text-cloud/30 focus:border-network"
+                className="w-full rounded-lg border border-hairline bg-ink px-3 py-2 font-mono text-xs text-cloud outline-none placeholder:text-cloud/30 focus:border-white/25"
               />
               <input
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 inputMode="decimal"
                 placeholder="0.00"
-                className="w-full rounded-lg border border-hairline bg-ink px-3 py-2 text-sm text-cloud outline-none placeholder:text-cloud/30 focus:border-network"
+                className="w-full rounded-lg border border-hairline bg-ink px-3 py-2 text-sm text-cloud outline-none placeholder:text-cloud/30 focus:border-white/25"
               />
 
               <button
                 onClick={onSend}
                 disabled={!canSend}
-                className="w-full rounded-lg bg-distro px-3 py-2 text-sm font-semibold text-ink transition-colors hover:bg-mint disabled:opacity-50"
+                className="w-full rounded-lg bg-distro px-3 py-2 text-sm font-semibold text-ink transition hover:bg-mint active:scale-[0.98] disabled:opacity-50"
               >
                 {isPending ? "Confirm in wallet…" : isConfirming ? "Sending…" : "Send"}
               </button>
@@ -185,7 +188,7 @@ export function ConnectWallet() {
                   href={explorerTx}
                   target="_blank"
                   rel="noreferrer"
-                  className="block text-xs text-mint underline"
+                  className="block text-xs text-distro underline"
                 >
                   Sent ✓ — view on Arcscan
                 </a>

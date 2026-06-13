@@ -12,7 +12,7 @@ export function NetworkGuard() {
 
   return (
     <div className="border-b border-amber-400/30 bg-amber-400/10">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-2.5 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-sm md:px-6">
         <span className="text-amber-200">
           You&apos;re on the wrong network. Distro runs on Arc Testnet.
         </span>

@@ -1,109 +1,207 @@
-export type Platform = "X" | "TikTok" | "YouTube" | "Farcaster" | "Instagram";
+export type Platform = "X" | "TikTok" | "YouTube" | "Instagram" | "Reels";
+export type Category =
+  | "Sports"
+  | "Music"
+  | "Tech"
+  | "Food"
+  | "Entertainment"
+  | "Beauty"
+  | "Gaming";
 
 export type Campaign = {
   id: string;
-  project: string;
-  /** single-letter avatar + accent color */
-  accent: string;
-  tagline: string;
+  brand: string;
+  handle: string;
+  title: string;
+  category: Category;
+  /** thumbnail photo */
+  image: string;
   platforms: Platform[];
   /** USDC */
   rewardPool: number;
   paidOut: number;
   /** USDC per 1,000 verified views */
   ratePer1k: number;
-  minViews: number;
+  timeLeft: string;
   clippers: number;
-  tags: string[];
+  status: "Open" | "Ending soon";
 };
 
-/** Mock marketplace data — replace with on-chain / API reads later. */
+const photo = (seed: string) => `https://picsum.photos/seed/${seed}/640/440`;
+
 export const campaigns: Campaign[] = [
   {
-    id: "hyperliquid-perp-szn",
-    project: "Hyperliquid",
-    accent: "#59e6a8",
-    tagline: "Clip the best perp trades from our live streams.",
-    platforms: ["X", "YouTube", "TikTok"],
-    rewardPool: 12000,
-    paidOut: 4120,
-    ratePer1k: 2.5,
-    minViews: 5000,
-    clippers: 218,
-    tags: ["DeFi", "Trading"],
+    id: "nike-run",
+    brand: "Nike",
+    handle: "@nike",
+    title: "Clip the best moments from our athletes' marathon runs",
+    category: "Sports",
+    image: photo("nike-run-track"),
+    platforms: ["TikTok", "YouTube", "Reels"],
+    rewardPool: 60305,
+    paidOut: 18420,
+    ratePer1k: 3.2,
+    timeLeft: "5d 9h",
+    clippers: 312,
+    status: "Open",
   },
   {
-    id: "monad-testnet-hype",
-    project: "Monad",
-    accent: "#8ef5c6",
-    tagline: "Make the testnet launch go viral. Speed is the story.",
-    platforms: ["X", "Farcaster", "TikTok"],
-    rewardPool: 8500,
-    paidOut: 6300,
-    ratePer1k: 1.8,
-    minViews: 2500,
-    clippers: 341,
-    tags: ["L1", "Launch"],
-  },
-  {
-    id: "pumpfun-meme-engine",
-    project: "Pump.fun",
-    accent: "#2dba7c",
-    tagline: "Meme-first clips. The funnier it spreads, the more you earn.",
+    id: "redbull-stunts",
+    brand: "Red Bull",
+    handle: "@redbull",
+    title: "Capture the wildest stunts and clutch moments",
+    category: "Sports",
+    image: photo("redbull-extreme-sky"),
     platforms: ["TikTok", "Instagram", "X"],
-    rewardPool: 15000,
-    paidOut: 9800,
+    rewardPool: 54295,
+    paidOut: 31200,
     ratePer1k: 4.0,
-    minViews: 10000,
+    timeLeft: "27d 6h",
     clippers: 902,
-    tags: ["Memes", "Consumer"],
+    status: "Open",
   },
   {
-    id: "jupiter-defi-explainers",
-    project: "Jupiter",
-    accent: "#59e6a8",
-    tagline: "Short explainers that turn swaps into routes anyone gets.",
-    platforms: ["YouTube", "X"],
-    rewardPool: 6000,
-    paidOut: 1450,
-    ratePer1k: 2.0,
-    minViews: 3000,
-    clippers: 76,
-    tags: ["DeFi", "Education"],
-  },
-  {
-    id: "base-onchain-summer",
-    project: "Base",
-    accent: "#8ef5c6",
-    tagline: "Recap the best onchain moments. Bring it everywhere.",
-    platforms: ["X", "Farcaster", "YouTube"],
-    rewardPool: 20000,
+    id: "spotify-wrapped",
+    brand: "Spotify",
+    handle: "@spotify",
+    title: "Turn new releases into clips your group chat will share",
+    category: "Music",
+    image: photo("spotify-concert-lights"),
+    platforms: ["TikTok", "Reels", "X"],
+    rewardPool: 25127,
     paidOut: 11200,
-    ratePer1k: 3.0,
-    minViews: 7500,
+    ratePer1k: 2.6,
+    timeLeft: "27d 21h",
     clippers: 514,
-    tags: ["L2", "Culture"],
+    status: "Open",
   },
   {
-    id: "arc-network-genesis",
-    project: "Arc Network",
-    accent: "#2dba7c",
-    tagline: "Show what sub-second USDC settlement actually feels like.",
-    platforms: ["X", "TikTok"],
-    rewardPool: 10000,
-    paidOut: 800,
-    ratePer1k: 2.2,
-    minViews: 4000,
-    clippers: 33,
-    tags: ["Infra", "Testnet"],
+    id: "netflix-scenes",
+    brand: "Netflix",
+    handle: "@netflix",
+    title: "Clip the scenes everyone will be talking about Monday",
+    category: "Entertainment",
+    image: photo("netflix-cinema-screen"),
+    platforms: ["TikTok", "YouTube"],
+    rewardPool: 41800,
+    paidOut: 22600,
+    ratePer1k: 3.5,
+    timeLeft: "2d 4h",
+    clippers: 741,
+    status: "Ending soon",
+  },
+  {
+    id: "gopro-pov",
+    brand: "GoPro",
+    handle: "@gopro",
+    title: "Best POV adventure footage of the month wins the pool",
+    category: "Tech",
+    image: photo("gopro-surf-pov"),
+    platforms: ["YouTube", "Reels", "TikTok"],
+    rewardPool: 21500,
+    paidOut: 9050,
+    ratePer1k: 2.8,
+    timeLeft: "18d 6h",
+    clippers: 145,
+    status: "Open",
+  },
+  {
+    id: "liquid-death-chaos",
+    brand: "Liquid Death",
+    handle: "@liquiddeath",
+    title: "Most chaotic, most shareable brand clip takes it all",
+    category: "Food",
+    image: photo("liquiddeath-skate-grit"),
+    platforms: ["TikTok", "Instagram"],
+    rewardPool: 33640,
+    paidOut: 14800,
+    ratePer1k: 4.4,
+    timeLeft: "9d 13h",
+    clippers: 627,
+    status: "Open",
+  },
+  {
+    id: "samsung-galaxy-cam",
+    brand: "Samsung",
+    handle: "@samsung",
+    title: "Show what the Galaxy camera can really do after dark",
+    category: "Tech",
+    image: photo("samsung-night-city"),
+    platforms: ["YouTube", "Reels"],
+    rewardPool: 28900,
+    paidOut: 6300,
+    ratePer1k: 3.0,
+    timeLeft: "12d 2h",
+    clippers: 198,
+    status: "Open",
+  },
+  {
+    id: "sephora-grwm",
+    brand: "Sephora",
+    handle: "@sephora",
+    title: "Get-ready-with-me clips that actually convert",
+    category: "Beauty",
+    image: photo("sephora-makeup-studio"),
+    platforms: ["TikTok", "Reels", "Instagram"],
+    rewardPool: 19750,
+    paidOut: 4900,
+    ratePer1k: 3.4,
+    timeLeft: "1d 9h",
+    clippers: 423,
+    status: "Ending soon",
+  },
+  {
+    id: "hellofresh-cook",
+    brand: "HelloFresh",
+    handle: "@hellofresh",
+    title: "Best 30-second cook-along recipe clips",
+    category: "Food",
+    image: photo("hellofresh-kitchen-cook"),
+    platforms: ["TikTok", "YouTube"],
+    rewardPool: 14300,
+    paidOut: 3120,
+    ratePer1k: 2.3,
+    timeLeft: "15d 1h",
+    clippers: 164,
+    status: "Open",
+  },
+  {
+    id: "easports-fc",
+    brand: "EA Sports FC",
+    handle: "@eafc",
+    title: "Capture your filthiest goals and skill moves",
+    category: "Gaming",
+    image: photo("easports-stadium-night"),
+    platforms: ["YouTube", "TikTok", "X"],
+    rewardPool: 36200,
+    paidOut: 15050,
+    ratePer1k: 3.1,
+    timeLeft: "11d 7h",
+    clippers: 588,
+    status: "Open",
   },
 ];
 
-export const marketStats = {
-  totalPaidOut: campaigns.reduce((s, c) => s + c.paidOut, 0),
-  activeCampaigns: campaigns.length,
-  clippers: campaigns.reduce((s, c) => s + c.clippers, 0),
-};
+export const categories: Category[] = [
+  "Sports",
+  "Music",
+  "Tech",
+  "Food",
+  "Entertainment",
+  "Beauty",
+  "Gaming",
+];
 
 export const usdc = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+
+/**
+ * Compact USD, e.g. $59.6K. Computed manually rather than via
+ * `Intl` compact notation, whose output differs between the Node server
+ * and browser ICU and would cause React hydration mismatches.
+ */
+export const usdcCompact = (n: number) => {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  return `$${n}`;
+};

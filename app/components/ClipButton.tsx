@@ -22,7 +22,7 @@ export function ClipButton({ project }: { project: string }) {
       <button
         onClick={login}
         disabled={!ready}
-        className={`${base} bg-distro text-ink hover:bg-mint disabled:opacity-60`}
+        className={`${base} bg-distro text-ink hover:bg-mint active:scale-[0.98] disabled:opacity-60`}
       >
         Connect to clip
       </button>
@@ -45,7 +45,7 @@ export function ClipButton({ project }: { project: string }) {
   return (
     <button
       onClick={() => alert(`Joining "${project}" — submission flow coming soon.`)}
-      className={`${base} bg-distro text-ink hover:bg-mint`}
+      className={`${base} bg-distro text-ink hover:bg-mint active:scale-[0.98]`}
     >
       Start clipping
     </button>
