@@ -35,19 +35,32 @@ async function apiFetch<T>(path: string, opts: Opts = {}): Promise<T> {
   if (opts.body !== undefined) headers["content-type"] = "application/json";
   if (opts.token) headers["authorization"] = `Bearer ${opts.token}`;
 
-  const res = await fetch(`${BASE}${path}`, {
-    method: opts.method ?? (opts.body !== undefined ? "POST" : "GET"),
-    headers,
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method: opts.method ?? (opts.body !== undefined ? "POST" : "GET"),
+      headers,
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    });
+  } catch {
+    // fetch only rejects on network failure (server unreachable, offline, …).
+    throw new ApiError(0, "Couldn't reach the server. Check your connection and try again.");
+  }
 
   if (!res.ok) {
-    let message = res.statusText;
+    let message = "";
     try {
       const data = await res.json();
-      message = Array.isArray(data?.message) ? data.message.join(", ") : (data?.message ?? message);
+      message = Array.isArray(data?.message) ? data.message.join(", ") : (data?.message ?? "");
     } catch {
       /* non-JSON error body */
+    }
+    // statusText is often empty over HTTP/2 or via the proxy — never surface a blank message.
+    if (!message) {
+      message =
+        res.status >= 500
+          ? "The server ran into a problem. Please try again."
+          : res.statusText || `Request failed (${res.status})`;
     }
     throw new ApiError(res.status, message);
   }

@@ -9,12 +9,13 @@ import { FeaturedCard } from "./FeaturedCard";
 import { TrendingCard } from "./TrendingCard";
 import { ExploreSection } from "./ExploreSection";
 import { OnboardingGate } from "./onboarding/OnboardingGate";
+import { StateBlock, AlertIcon, InboxIcon, Spinner } from "./StateBlock";
 import { useCampaigns } from "@/lib/api/hooks";
 import { adaptCampaign } from "@/lib/api/adapt";
 
 export function Marketplace() {
   const [query, setQuery] = useState("");
-  const { data, isLoading, isError, error } = useCampaigns();
+  const { data, isLoading, isError, refetch, isFetching } = useCampaigns();
 
   const items = useMemo(() => (data ?? []).map(adaptCampaign), [data]);
   const featured = items.slice(0, 6);
@@ -29,22 +30,35 @@ export function Marketplace() {
       <main className="flex-1 space-y-10 px-4 py-6 md:px-6">
         <Hero items={items} />
 
-        {isLoading && <p className="text-sm text-cloud/50">Loading campaigns…</p>}
+        {isLoading && (
+          <div className="flex justify-center py-16 text-cloud/40">
+            <Spinner size={26} />
+          </div>
+        )}
 
         {isError && (
-          <p className="text-sm text-red-300">
-            Couldn&apos;t load campaigns{error instanceof Error ? `: ${error.message}` : ""}.
-          </p>
+          <StateBlock
+            icon={<AlertIcon />}
+            title="Couldn't load campaigns"
+            description="We couldn't reach the server. It may be waking up — try again in a moment."
+            action={
+              <button
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="rounded-lg bg-distro px-4 py-2 text-sm font-semibold text-ink transition hover:bg-mint active:scale-[0.98] disabled:opacity-60"
+              >
+                {isFetching ? "Retrying…" : "Try again"}
+              </button>
+            }
+          />
         )}
 
         {!isLoading && !isError && items.length === 0 && (
-          <div className="rounded-2xl border border-hairline bg-panel p-10 text-center">
-            <h2 className="font-display text-xl font-bold text-cloud">No campaigns yet</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-cloud/55">
-              Be the first brand to launch one — hit “Create” to fund a campaign and upload your
-              source content.
-            </p>
-          </div>
+          <StateBlock
+            icon={<InboxIcon />}
+            title="No campaigns yet"
+            description="Be the first brand to launch one — hit Create to fund a campaign and upload your source content."
+          />
         )}
 
         {items.length > 0 && (

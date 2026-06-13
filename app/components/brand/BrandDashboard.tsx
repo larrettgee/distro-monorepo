@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMyAccount, useMyCampaigns } from "@/lib/api/hooks";
 import { useCreateModal } from "@/components/create/CreateCampaignProvider";
 import { usdc } from "@/lib/campaigns";
+import { StateBlock, InboxIcon, Spinner } from "@/components/StateBlock";
 
 const STATUS_LABEL: Record<string, string> = {
   active: "Active",
@@ -18,7 +19,10 @@ export function BrandDashboard() {
 
   if (account && account.type !== "brand") {
     return (
-      <p className="text-sm text-cloud/60">This dashboard is for brand accounts.</p>
+      <StateBlock
+        title="Brands only"
+        description="Switch to a brand account to create and manage campaigns."
+      />
     );
   }
 
@@ -35,10 +39,24 @@ export function BrandDashboard() {
       </div>
 
       {isLoading ? (
-        <p className="mt-6 text-sm text-cloud/50">Loading…</p>
+        <div className="flex justify-center py-16 text-cloud/40">
+          <Spinner size={24} />
+        </div>
       ) : !campaigns || campaigns.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-hairline bg-panel p-10 text-center">
-          <p className="text-sm text-cloud/60">You haven&apos;t created any campaigns yet.</p>
+        <div className="mt-6">
+          <StateBlock
+            icon={<InboxIcon />}
+            title="No campaigns yet"
+            description="Create your first campaign to fund a bounty and start getting clips."
+            action={
+              <button
+                onClick={openCreate}
+                className="rounded-lg bg-distro px-4 py-2 text-sm font-semibold text-ink transition hover:bg-mint active:scale-[0.98]"
+              >
+                Create campaign
+              </button>
+            }
+          />
         </div>
       ) : (
         <ul className="mt-6 space-y-3">

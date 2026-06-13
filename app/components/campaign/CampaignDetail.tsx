@@ -1,16 +1,58 @@
 "use client";
 
+import Link from "next/link";
 import { useCampaign, useMyAccount } from "@/lib/api/hooks";
+import { ApiError } from "@/lib/api/client";
 import { usdc } from "@/lib/campaigns";
+import { StateBlock, AlertIcon, SearchOffIcon, Spinner } from "@/components/StateBlock";
 import { PerformancePanel } from "./PerformancePanel";
 import { SubmitPanel } from "./SubmitPanel";
 
 export function CampaignDetail({ id }: { id: string }) {
-  const { data: campaign, isLoading, isError } = useCampaign(id);
+  const { data: campaign, isLoading, isError, error, refetch, isFetching } = useCampaign(id);
   const { data: account } = useMyAccount();
 
-  if (isLoading) return <p className="text-sm text-cloud/50">Loading campaign…</p>;
-  if (isError || !campaign) return <p className="text-sm text-red-300">Campaign not found.</p>;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-20 text-cloud/40">
+        <Spinner size={26} />
+      </div>
+    );
+  }
+
+  if (isError || !campaign) {
+    const notFound = error instanceof ApiError && error.status === 404;
+    return notFound ? (
+      <StateBlock
+        icon={<SearchOffIcon />}
+        title="Campaign not found"
+        description="This campaign may have been removed, or the link is wrong."
+        action={
+          <Link
+            href="/"
+            className="rounded-lg bg-distro px-4 py-2 text-sm font-semibold text-ink transition hover:bg-mint active:scale-[0.98]"
+          >
+            Browse campaigns
+          </Link>
+        }
+      />
+    ) : (
+      <StateBlock
+        icon={<AlertIcon />}
+        title="Couldn't load this campaign"
+        description="We couldn't reach the server. Try again in a moment."
+        action={
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="rounded-lg bg-distro px-4 py-2 text-sm font-semibold text-ink transition hover:bg-mint active:scale-[0.98] disabled:opacity-60"
+          >
+            {isFetching ? "Retrying…" : "Try again"}
+          </button>
+        }
+      />
+    );
+  }
 
   const ownsCampaign =
     account?.type === "brand" &&

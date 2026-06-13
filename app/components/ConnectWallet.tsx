@@ -74,24 +74,29 @@ export function ConnectWallet() {
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
 
-  // Keep the active wagmi account in sync with Privy's connected wallets so
-  // balance/send work — and so a wallet left connected by a previous session
-  // (e.g. an external wallet wagmi didn't disconnect on logout) can't linger as
-  // the displayed address. Switch whenever the active wagmi address isn't one
-  // of the wallets Privy currently has linked.
-  useEffect(() => {
-    if (!authenticated || wallets.length === 0) return;
-    const inSync = wallets.some(
-      (w) => w.address.toLowerCase() === wagmiAddress?.toLowerCase(),
-    );
-    if (!inSync) void setActiveWallet(wallets[0]);
-  }, [authenticated, wagmiAddress, wallets, setActiveWallet]);
-
-  // Prefer Privy's linked wallet as the source of truth; fall back to wagmi.
+  // The account's registered wallet is the identity the whole app keys on
+  // (campaigns, payouts). It's set server-side from the Privy user's primary
+  // wallet at sign-up, so prefer it for display and balance; fall back to the
+  // connected wallet only before the account exists.
+  const accountAddress = account?.walletAddress as `0x${string}` | undefined;
   const address =
+    accountAddress ??
     (wallets[0]?.address as `0x${string}` | undefined) ??
     wagmiAddress ??
     (user?.wallet?.address as `0x${string}` | undefined);
+
+  // Point wagmi's active wallet at that same account wallet (or the first linked
+  // wallet pre-registration) so balance/send use the right one — and so a wallet
+  // left over from a previous session can't take over as the active account.
+  useEffect(() => {
+    if (!authenticated || wallets.length === 0) return;
+    const target =
+      wallets.find((w) => w.address.toLowerCase() === accountAddress?.toLowerCase()) ??
+      wallets[0];
+    if (target.address.toLowerCase() !== wagmiAddress?.toLowerCase()) {
+      void setActiveWallet(target);
+    }
+  }, [authenticated, wagmiAddress, wallets, accountAddress, setActiveWallet]);
 
   // Tear down wagmi's connector alongside Privy so no external wallet survives
   // logout and reappears on the next sign-in.
