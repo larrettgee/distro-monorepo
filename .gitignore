@@ -1,0 +1,44 @@
+# ── Root-level ignores (shared across all packages) ──
+# Package-specific build output is ignored in each package's own .gitignore
+# (api/, app/, contracts/). This file covers cross-cutting patterns.
+
+# Dependencies (any depth)
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.local.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+
+# Editors / IDEs
+.idea/
+*.sublime-workspace
+*.swp
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Build / test caches
+*.tsbuildinfo
+.eslintcache
+/coverage
