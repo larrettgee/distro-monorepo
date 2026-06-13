@@ -49,8 +49,19 @@ export function ManageSocials() {
   const disconnect = useDisconnectChannel();
   // Which platform's connect modal is open. `null` = closed.
   const [adding, setAdding] = useState<string | null>(null);
+  // Platform id whose "coming soon" hint is briefly showing.
+  const [soon, setSoon] = useState<string | null>(null);
 
   const channels = profile?.channels ?? [];
+
+  function pick(id: string, connectable: boolean) {
+    if (connectable) {
+      setAdding(id);
+      return;
+    }
+    setSoon(id);
+    setTimeout(() => setSoon((cur) => (cur === id ? null : cur)), 1800);
+  }
 
   if (account && account.type !== "clipper") {
     return (
@@ -87,22 +98,17 @@ export function ManageSocials() {
           {PLATFORMS.map(({ id, name, Logo, connectable }) => (
             <button
               key={id}
-              disabled={!connectable}
-              onClick={() => connectable && setAdding(id)}
-              className={`flex flex-col items-center gap-3 rounded-2xl border border-hairline px-4 py-7 transition ${
-                connectable
-                  ? "bg-panel text-cloud hover:border-distro/40 hover:bg-panel-2"
-                  : "cursor-not-allowed bg-panel/40 text-cloud/50"
-              }`}
+              onClick={() => pick(id, connectable)}
+              className="flex flex-col items-center gap-3 rounded-2xl border border-hairline bg-panel px-4 py-7 text-cloud transition hover:border-distro/40 hover:bg-panel-2"
             >
-              <Logo size={32} className={connectable ? undefined : "text-cloud/50"} />
+              <Logo size={32} />
               <span className="text-sm font-semibold">{name}</span>
               <span
-                className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
-                  connectable ? "text-distro" : "border border-hairline text-cloud/40"
+                className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors ${
+                  soon === id ? "text-amber-400" : "text-distro"
                 }`}
               >
-                {connectable ? "Connect" : "Soon"}
+                {soon === id ? "Coming soon" : "Connect"}
               </span>
             </button>
           ))}

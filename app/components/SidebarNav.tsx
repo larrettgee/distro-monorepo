@@ -7,6 +7,7 @@ import {
   IconHome,
   IconCampaigns,
   IconTrending,
+  IconTrophy,
   IconUsers,
 } from "./icons";
 
@@ -36,19 +37,20 @@ export function SidebarNav() {
           Home
         </Link>
 
-        {/* Discovery — relevant to clippers and signed-out visitors, not brands. */}
+        {/* Discovery — relevant to clippers and signed-out visitors, not brands.
+            "Campaigns" (/#explore) is omitted: it lands on the same home view. */}
         {!isBrand && (
-          <>
-            <Link href="/#explore" className={`${link} ${idle}`}>
-              <IconCampaigns size={19} />
-              Campaigns
-            </Link>
-            <Link href="/#trending" className={`${link} ${idle}`}>
-              <IconTrending size={19} />
-              Trending
-            </Link>
-          </>
+          <Link href="/#trending" className={`${link} ${idle}`}>
+            <IconTrending size={19} />
+            Trending
+          </Link>
         )}
+
+        {/* Leaderboard is relevant to everyone — climbing it (clippers) and scouting talent (brands). */}
+        <Link href="/leaderboard" className={`${link} ${idle}`}>
+          <IconTrophy size={19} />
+          Leaderboard
+        </Link>
 
         {isBrand && (
           <Link href="/dashboard" className={`${link} ${idle}`}>

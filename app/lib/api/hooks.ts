@@ -180,3 +180,24 @@ export function useSubmitVideos(campaignId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["submissions", campaignId] }),
   });
 }
+
+// ─── Leaderboard ───
+
+/** Public ranking of clippers by total views. */
+export function useLeaderboard(limit?: number) {
+  return useQuery({
+    queryKey: ["leaderboard", limit ?? "default"],
+    queryFn: () => api.leaderboard.list(limit),
+  });
+}
+
+/** The signed-in clipper's own views, earnings and leaderboard position. */
+export function useMyClipperStats() {
+  const { ready, authenticated, getAccessToken } = usePrivy();
+  const { data: account } = useMyAccount();
+  return useQuery({
+    queryKey: ["leaderboard", "me"],
+    enabled: ready && authenticated && account?.type === "clipper",
+    queryFn: async () => api.leaderboard.me(await getAccessToken()),
+  });
+}

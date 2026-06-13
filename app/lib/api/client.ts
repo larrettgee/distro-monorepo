@@ -122,6 +122,11 @@ export const api = {
     list: (campaignId: string, token: string | null) =>
       apiFetch<Submission[]>(`/campaigns/${campaignId}/submissions`, { token }),
   },
+  leaderboard: {
+    list: (limit?: number) =>
+      apiFetch<LeaderboardEntry[]>(`/leaderboard${limit ? `?limit=${limit}` : ""}`),
+    me: (token: string | null) => apiFetch<ClipperStats>("/leaderboard/me", { token }),
+  },
   youtube: {
     video: (url: string) =>
       apiFetch<YoutubeVideo>(`/youtube/videos?url=${encodeURIComponent(url)}`),
