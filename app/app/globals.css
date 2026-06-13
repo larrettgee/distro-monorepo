@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+/* ── Distro brand tokens ──────────────────────────────────────────────────── */
+@theme inline {
+  /* Palette (Brand Book §03) */
+  --color-distro: #59e6a8; /* Distro Green  */
+  --color-network: #2dba7c; /* Network Green */
+  --color-teal: #0e4d49; /* Deep Teal     */
+  --color-mint: #8ef5c6; /* Mint Glow     */
+  --color-cloud: #f4f5f6; /* Cloud         */
+
+  /* Surfaces (dark, onchain aesthetic) */
+  --color-ink: #04140f; /* page background */
+  --color-panel: #07221b; /* card background */
+  --color-panel-2: #0a2d24; /* raised panel    */
+  --color-hairline: #14483a; /* borders         */
+
+  --font-display: var(--font-display); /* Space Grotesk */
+  --font-sans: var(--font-sans); /* Inter         */
+}
+
+:root {
+  --background: #04140f;
+  --foreground: #f4f5f6;
+}
+
+body {
+  background:
+    radial-gradient(60rem 40rem at 80% -10%, rgba(89, 230, 168, 0.1), transparent 60%),
+    radial-gradient(50rem 40rem at -10% 10%, rgba(45, 186, 124, 0.08), transparent 55%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+}
