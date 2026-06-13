@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useMyAccount, useRegisterAccount } from "@/lib/api/hooks";
 import type { AccountType } from "@/lib/api/types";
+import { Modal } from "@/components/Modal";
 import { IconCampaigns, IconFilm } from "@/components/icons";
 
 /**
@@ -21,7 +22,7 @@ export function OnboardingGate() {
   const [username, setUsername] = useState("");
 
   // Only gate once we positively know the account is uninitialized.
-  if (!ready || !authenticated || isLoading || !account || account.initialized) return null;
+  const open = ready && authenticated && !isLoading && !!account && !account.initialized;
 
   const trimmed = username.trim();
   const usernameValid = trimmed.length >= 3 && trimmed.length <= 20 && USERNAME_RE.test(trimmed);
@@ -34,13 +35,12 @@ export function OnboardingGate() {
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/80" aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="relative z-10 w-full max-w-md rounded-2xl border border-hairline bg-panel p-6"
-      >
+    <Modal
+      open={open}
+      overlayClassName="z-[70]"
+      backdropClassName="bg-black/80"
+      panelClassName="w-full max-w-md rounded-2xl border border-hairline bg-panel p-6"
+    >
         <h2 className="font-display text-xl font-bold text-cloud">Welcome to Distro</h2>
         <p className="mt-1 text-sm text-cloud/55">Pick a username, then choose how you&apos;ll use Distro.</p>
 
@@ -90,8 +90,7 @@ export function OnboardingGate() {
           You can use the platform right away. World ID verification is required later before
           clippers can receive funds.
         </p>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

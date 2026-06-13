@@ -112,39 +112,47 @@ export function VideoUploader({
     });
   }
 
+  // In single-source mode the dropzone and the file row occupy one fixed-height
+  // box and swap in place, so picking a file never stacks a second component or
+  // changes the section's height.
+  const single = !multiple;
+  const showDropzone = !single || items.length === 0;
+
   return (
-    <div className="space-y-4">
+    <div className={single ? "flex min-h-[180px] flex-col justify-center gap-3" : "space-y-4"}>
       {/* dropzone */}
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={onDrop}
-        className={`flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-10 text-center transition-colors ${
-          dragging ? "border-distro bg-distro/5" : "border-hairline hover:border-white/25 hover:bg-panel-2"
-        }`}
-      >
-        <span className="grid h-11 w-11 place-items-center rounded-full bg-panel-2 text-cloud/70">
-          <IconUpload size={22} />
-        </span>
-        <span className="text-sm font-medium text-cloud">Drop source video here, or click to browse</span>
-        <span className="text-xs text-cloud/45">MP4, MOV, WebM · up to {formatBytes(maxSizeBytes)}</span>
-        <input
-          ref={inputRef}
-          type="file"
-          accept={accept}
-          multiple={multiple}
-          hidden
-          onChange={(e) => {
-            addFiles(e.target.files);
-            e.target.value = "";
+      {showDropzone && (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
           }}
-        />
-      </button>
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+          className={`flex w-full flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-10 text-center transition-colors ${
+            dragging ? "border-distro bg-distro/5" : "border-hairline hover:border-white/25 hover:bg-panel-2"
+          }`}
+        >
+          <span className="grid h-11 w-11 place-items-center rounded-full bg-panel-2 text-cloud/70">
+            <IconUpload size={22} />
+          </span>
+          <span className="text-sm font-medium text-cloud">Drop source video here, or click to browse</span>
+          <span className="text-xs text-cloud/45">MP4, MOV, WebM · up to {formatBytes(maxSizeBytes)}</span>
+          <input
+            ref={inputRef}
+            type="file"
+            accept={accept}
+            multiple={multiple}
+            hidden
+            onChange={(e) => {
+              addFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+        </button>
+      )}
 
       {/* file list */}
       {items.length > 0 && (

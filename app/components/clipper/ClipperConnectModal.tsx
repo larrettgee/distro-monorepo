@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   useClipperProfile,
   useConnectChannelStart,
   useConnectChannelVerify,
 } from "@/lib/api/hooks";
+import { Modal } from "@/components/Modal";
 import { IconX, IconCheck } from "@/components/icons";
 
 export function ClipperConnectModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -14,33 +15,19 @@ export function ClipperConnectModal({ open, onClose }: { open: boolean; onClose:
   const verify = useConnectChannelVerify();
   const [channelUrl, setChannelUrl] = useState("");
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
   const code = start.data?.code ?? profile?.pendingCode ?? null;
   const connected = profile?.connected;
   const field =
     "w-full rounded-lg border border-hairline bg-ink px-3 py-2 text-sm text-cloud outline-none placeholder:text-cloud/30 focus:border-white/25";
 
   return (
-    <div className="fixed inset-0 z-[65] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70" onClick={onClose} aria-hidden />
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="relative z-10 w-full max-w-md rounded-2xl border border-hairline bg-panel p-5"
-      >
-        <div className="flex items-start justify-between">
+    <Modal
+      open={open}
+      onDismiss={onClose}
+      overlayClassName="z-[65]"
+      panelClassName="w-full max-w-md rounded-2xl border border-hairline bg-panel p-5"
+    >
+      <div className="flex items-start justify-between">
           <div>
             <h2 className="font-display text-lg font-bold text-cloud">Connect YouTube</h2>
             <p className="mt-0.5 text-sm text-cloud/50">
@@ -106,7 +93,6 @@ export function ClipperConnectModal({ open, onClose }: { open: boolean; onClose:
             )}
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 }

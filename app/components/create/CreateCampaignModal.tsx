@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { writeContract, waitForTransactionReceipt, switchChain, getAccount } from "@wagmi/core";
 import { config as wagmiConfig } from "@/lib/wagmi";
@@ -11,6 +11,7 @@ import { useCreateCampaign, useMyAccount } from "@/lib/api/hooks";
 import { createCloudflareStreamDriver } from "@/lib/upload/cloudflareStreamDriver";
 import { VideoUploader } from "@/components/upload/VideoUploader";
 import type { UploadAsset } from "@/lib/upload/types";
+import { Modal } from "@/components/Modal";
 import { IconX, IconCheck } from "@/components/icons";
 import { YouTubeLogo, TikTokLogo, XLogo, InstagramLogo } from "./platformIcons";
 
@@ -49,19 +50,6 @@ export function CreateCampaignModal({ open, onClose }: { open: boolean; onClose:
   const [asset, setAsset] = useState<UploadAsset | null>(null);
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
 
   const isBrand = account?.type === "brand";
   const sourceContentUrl = asset ? (asset.url ?? `https://cloudflarestream.com/${asset.id}`) : "";
@@ -139,14 +127,11 @@ export function CreateCampaignModal({ open, onClose }: { open: boolean; onClose:
     "w-full rounded-lg border border-hairline bg-ink px-3 py-2 text-sm text-cloud outline-none placeholder:text-cloud/30 focus:border-white/25";
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70" onClick={phase === "form" ? onClose : undefined} aria-hidden />
-
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="relative z-10 flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-hairline bg-panel"
-      >
+    <Modal
+      open={open}
+      onDismiss={phase === "form" ? onClose : undefined}
+      panelClassName="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-hairline bg-panel"
+    >
         <div className="flex items-start justify-between p-5 pb-3">
           <div>
             <h2 className="font-display text-lg font-bold text-cloud">Create campaign</h2>
@@ -326,8 +311,7 @@ export function CreateCampaignModal({ open, onClose }: { open: boolean; onClose:
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 }
 
