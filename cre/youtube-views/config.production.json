@@ -1,0 +1,14 @@
+{
+  "schedule": "0 */5 * * * *",
+  "youtubeApiBaseUrl": "https://www.googleapis.com/youtube/v3/videos",
+  "chainSelector": "3034092155422581607",
+  "reporterAddress": "0x78203f4Dd20968808cFD05A094e9cCfF4E781089",
+  "jobId": "3",
+  "gasLimit": "1000000",
+  "videos": [
+    {
+      "videoId": "dQw4w9WgXcQ",
+      "recipient": "0x000000000000000000000000000000000000dEaD"
+    }
+  ]
+}
