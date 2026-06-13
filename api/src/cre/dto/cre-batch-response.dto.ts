@@ -36,15 +36,27 @@ export class JobBatchDto implements JobBatch {
 }
 
 export class CreBatchResponseDto implements DailyBatchPayload {
-  @ApiProperty({ description: 'UTC day key for this snapshot.', example: '2026-06-13' })
+  @ApiProperty({ description: 'UTC day key for this batch.', example: '2026-06-13' })
   dateKey!: string;
 
   @ApiProperty({ description: 'Target chain id.', example: 5042002 })
   chainId!: number;
 
-  @ApiProperty({ description: 'ISO timestamp the snapshot was generated.' })
+  @ApiProperty({
+    description:
+      'Determinism-bucket start (ISO). Stable within a bucket so concurrent ' +
+      'DON-node calls see an identical payload.',
+  })
   generatedAt!: string;
 
   @ApiProperty({ type: JobBatchDto, isArray: true })
   jobs!: JobBatchDto[];
+}
+
+export class RefreshResultDto {
+  @ApiProperty({ description: 'Submissions whose view count was refreshed.', example: 3 })
+  refreshed!: number;
+
+  @ApiProperty({ description: 'Submissions whose refresh failed (kept prior count).', example: 0 })
+  failed!: number;
 }

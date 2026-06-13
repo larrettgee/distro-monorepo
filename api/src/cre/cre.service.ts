@@ -10,18 +10,16 @@ import {
   type SubmissionDocument,
 } from '../submissions/schemas/submission.schema';
 import { YoutubeService } from '../youtube/youtube.service';
-import { PAYABLE_SUBMISSION_STATUSES } from './cre.constants';
+import { CRE_BATCH_BUCKET_MS, PAYABLE_SUBMISSION_STATUSES } from './cre.constants';
 import type { DailyBatchPayload, JobBatch } from './cre.types';
-import { aggregateByWallet, utcDateKey } from './cre.utils';
-import { DailyBatch, type DailyBatchDocument } from './schemas/daily-batch.schema';
+import { RefreshResultDto } from './dto/cre-batch-response.dto';
+import { aggregateByWallet, bucketStartIso, utcDateKey } from './cre.utils';
 
 @Injectable()
 export class CreService {
   private readonly logger = new Logger(CreService.name);
 
   constructor(
-    @InjectModel(DailyBatch.name)
-    private readonly batchModel: Model<DailyBatchDocument>,
     @InjectModel(Submission.name)
     private readonly submissionModel: Model<SubmissionDocument>,
     private readonly campaignsService: CampaignsService,
@@ -32,33 +30,16 @@ export class CreService {
   // ─── Queries ───
 
   /**
-   * Returns today's payout batch, computing and persisting it on first request
-   * of the UTC day so repeated calls (e.g. from each DON node) are identical.
+   * Build the current payout batch: each active on-chain campaign's clipper
+   * wallets with their summed stored view counts.
+   *
+   * Pure function of stored DB state (no external calls), so it always reflects
+   * current data and is byte-identical across concurrent DON-node calls within a
+   * determinism bucket — required for the workflow's identical-consensus.
+   * View-count freshness is a separate concern (see `refreshViews`).
    */
-  async getDailyBatch(): Promise<DailyBatchPayload> {
-    const dateKey = utcDateKey(new Date());
-
-    const existing = await this.batchModel.findOne({ dateKey }).exec();
-    if (existing) {
-      return existing.payload;
-    }
-
-    const payload = await this.buildSnapshot(dateKey);
-    try {
-      await this.batchModel.create({ dateKey, payload });
-    } catch {
-      // Concurrent first-call race: another request persisted it; reuse that.
-      const persisted = await this.batchModel.findOne({ dateKey }).exec();
-      if (persisted) {
-        return persisted.payload;
-      }
-    }
-    return payload;
-  }
-
-  // ─── Internal helpers ───
-
-  private async buildSnapshot(dateKey: string): Promise<DailyBatchPayload> {
+  async getBatch(): Promise<DailyBatchPayload> {
+    const now = new Date();
     const chainId = this.config.get('chain.id', { infer: true });
     const campaigns = await this.campaignsService.findActiveOnchainDocs();
 
@@ -67,35 +48,62 @@ export class CreService {
       jobs.push(await this.aggregateCampaign(campaign));
     }
 
-    this.logger.log(
-      `Built CRE batch ${dateKey}: ${jobs.length} job(s), ` +
-        `${jobs.reduce((n, j) => n + j.recipients.length, 0)} recipient(s).`,
-    );
-
     return {
-      dateKey,
+      dateKey: utcDateKey(now),
       chainId,
-      generatedAt: new Date().toISOString(),
+      generatedAt: bucketStartIso(now, CRE_BATCH_BUCKET_MS),
       jobs,
     };
   }
 
-  /** Refresh view counts for a campaign's payable clips and aggregate per wallet. */
+  // ─── Mutations ───
+
+  /**
+   * Refresh stored view counts for active campaigns' payable submissions from
+   * YouTube. Kept out of `getBatch` so the served batch stays deterministic;
+   * call this (ops / scheduler) before settlement to make counts current.
+   */
+  async refreshViews(): Promise<RefreshResultDto> {
+    const campaigns = await this.campaignsService.findActiveOnchainDocs();
+    let refreshed = 0;
+    let failed = 0;
+
+    for (const campaign of campaigns) {
+      const submissions = await this.payableSubmissions(campaign);
+      for (const submission of submissions) {
+        try {
+          const video = await this.youtubeService.getVideoInfo(
+            submission.videoUrl,
+          );
+          if (video.viewCount !== null) {
+            submission.lastViewCount = video.viewCount;
+            await submission.save();
+            refreshed++;
+          }
+        } catch (error) {
+          failed++;
+          this.logger.warn(
+            `View refresh failed for submission ${submission.id}: ` +
+              `${error instanceof Error ? error.message : 'unknown'}`,
+          );
+        }
+      }
+    }
+
+    this.logger.log(`Refreshed ${refreshed} submission(s), ${failed} failed.`);
+    return { refreshed, failed };
+  }
+
+  // ─── Internal helpers ───
+
   private async aggregateCampaign(
     campaign: CampaignDocument,
   ): Promise<JobBatch> {
-    const submissions = await this.submissionModel
-      .find({
-        campaignId: campaign.id,
-        status: { $in: PAYABLE_SUBMISSION_STATUSES },
-      })
-      .exec();
-
-    const entries: Array<{ wallet: string; views: number }> = [];
-    for (const submission of submissions) {
-      const views = await this.refreshViewCount(submission);
-      entries.push({ wallet: submission.clipperWallet, views });
-    }
+    const submissions = await this.payableSubmissions(campaign);
+    const entries = submissions.map((s) => ({
+      wallet: s.clipperWallet,
+      views: s.lastViewCount ?? 0,
+    }));
 
     return {
       jobId: campaign.onchainJobId as number,
@@ -104,26 +112,14 @@ export class CreService {
     };
   }
 
-  /**
-   * Best-effort refresh of a submission's view count from YouTube. On failure
-   * the last stored count is used so a transient API error can't zero a payout.
-   */
-  private async refreshViewCount(
-    submission: SubmissionDocument,
-  ): Promise<number> {
-    try {
-      const video = await this.youtubeService.getVideoInfo(submission.videoUrl);
-      if (video.viewCount !== null) {
-        submission.lastViewCount = video.viewCount;
-        await submission.save();
-        return video.viewCount;
-      }
-    } catch (error) {
-      this.logger.warn(
-        `View refresh failed for submission ${submission.id}: ` +
-          `${error instanceof Error ? error.message : 'unknown'}`,
-      );
-    }
-    return submission.lastViewCount ?? 0;
+  private payableSubmissions(
+    campaign: CampaignDocument,
+  ): Promise<SubmissionDocument[]> {
+    return this.submissionModel
+      .find({
+        campaignId: campaign.id,
+        status: { $in: PAYABLE_SUBMISSION_STATUSES },
+      })
+      .exec();
   }
 }

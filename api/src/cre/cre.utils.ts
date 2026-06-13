@@ -1,8 +1,18 @@
 import type { AggregatedRecipient } from './cre.types';
 
-/** UTC day key (YYYY-MM-DD) used to make the daily batch idempotent. */
+/** UTC day key (YYYY-MM-DD), used for display on the batch. */
 export function utcDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Start of the current determinism bucket as an ISO string. Stable for all
+ * calls within the same `bucketMs` window, so concurrent DON-node requests get
+ * an identical `generatedAt`.
+ */
+export function bucketStartIso(date: Date, bucketMs: number): string {
+  const start = Math.floor(date.getTime() / bucketMs) * bucketMs;
+  return new Date(start).toISOString();
 }
 
 /**

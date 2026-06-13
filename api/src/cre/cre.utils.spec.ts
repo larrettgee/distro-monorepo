@@ -1,4 +1,4 @@
-import { aggregateByWallet, utcDateKey } from './cre.utils';
+import { aggregateByWallet, bucketStartIso, utcDateKey } from './cre.utils';
 
 describe('cre.utils', () => {
   describe('utcDateKey', () => {
@@ -13,6 +13,24 @@ describe('cre.utils', () => {
       expect(utcDateKey(new Date('2026-06-13T00:30:00.000Z'))).toBe(
         '2026-06-13',
       );
+    });
+  });
+
+  describe('bucketStartIso', () => {
+    const FIVE_MIN = 5 * 60 * 1000;
+
+    it('floors to the bucket start (stable within a bucket)', () => {
+      const a = bucketStartIso(new Date('2026-06-13T12:03:59.000Z'), FIVE_MIN);
+      const b = bucketStartIso(new Date('2026-06-13T12:01:00.000Z'), FIVE_MIN);
+      expect(a).toBe('2026-06-13T12:00:00.000Z');
+      expect(a).toBe(b); // both fall in the 12:00–12:05 bucket
+    });
+
+    it('rolls to a new bucket after the window', () => {
+      const a = bucketStartIso(new Date('2026-06-13T12:04:59.000Z'), FIVE_MIN);
+      const b = bucketStartIso(new Date('2026-06-13T12:05:01.000Z'), FIVE_MIN);
+      expect(a).not.toBe(b);
+      expect(b).toBe('2026-06-13T12:05:00.000Z');
     });
   });
 

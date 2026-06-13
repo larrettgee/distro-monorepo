@@ -12,5 +12,10 @@ export const PAYABLE_SUBMISSION_STATUSES: readonly SubmissionStatus[] = [
   'accepted',
 ];
 
-/** Mongo collection holding the per-day batch snapshots served to the CRE. */
-export const CRE_DAILY_BATCH_COLLECTION = 'cre_daily_batches';
+/**
+ * Determinism bucket for the batch's `generatedAt`. The batch is otherwise a
+ * pure function of stored DB state, so every DON node that calls within the
+ * same bucket gets a byte-identical response (required for identical-consensus),
+ * while data added since the last bucket still appears immediately.
+ */
+export const CRE_BATCH_BUCKET_MS = 5 * 60 * 1000; // 5 minutes
