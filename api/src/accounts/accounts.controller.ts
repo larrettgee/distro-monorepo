@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   UseGuards,
   ValidationPipe,
@@ -18,8 +19,10 @@ import { PrivyAuthGuard } from '../auth/privy-auth.guard';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { RpContextResponseDto } from '../worldid/dto/rp-context-response.dto';
 import { AccountsService } from './accounts.service';
+import { AccountOverviewDto } from './dto/account-overview.dto';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { RegisterAccountDto } from './dto/register-account.dto';
+import { UpdateUsernameDto } from './dto/update-username.dto';
 import { VerifyWorldIdDto } from './dto/verify-worldid.dto';
 
 /**
@@ -48,6 +51,30 @@ export class AccountsController {
   @ApiOkResponse({ type: AccountResponseDto })
   getMe(@CurrentUser() user: AuthenticatedUser): Promise<AccountResponseDto> {
     return this.accountsService.getMe(user.privyId);
+  }
+
+  @Get('overview')
+  @ApiOperation({
+    summary: 'High-level account dashboard',
+    description:
+      'Role-aware overview: brand spend / escrow, or clipper earnings / on-chain claimable.',
+  })
+  @ApiOkResponse({ type: AccountOverviewDto })
+  getOverview(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<AccountOverviewDto> {
+    return this.accountsService.getOverview(user.privyId);
+  }
+
+  @Patch('me/username')
+  @ApiOperation({ summary: 'Change the account username' })
+  @ApiOkResponse({ type: AccountResponseDto })
+  @ApiConflictResponse({ description: 'Username is already taken.' })
+  updateUsername(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateUsernameDto,
+  ): Promise<AccountResponseDto> {
+    return this.accountsService.updateUsername(user.privyId, dto.username);
   }
 
   @Post('register')

@@ -139,6 +139,14 @@ export class CampaignsService {
     return this.toResponse(await this.findById(id));
   }
 
+  /** A brand's funded campaigns (have an on-chain job id). Raw docs for internal use. */
+  async findFundedByBrand(brandPrivyId: string): Promise<CampaignDocument[]> {
+    return this.campaignModel
+      .find({ brandPrivyId, onchainJobId: { $exists: true, $ne: null } })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   async getPerformance(
     user: AuthenticatedUser,
     id: string,
