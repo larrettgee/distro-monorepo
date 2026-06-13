@@ -7,7 +7,6 @@ import { Hero } from "./Hero";
 import { ScrollRow } from "./ScrollRow";
 import { FeaturedCard } from "./FeaturedCard";
 import { TrendingCard } from "./TrendingCard";
-import { ExploreSection } from "./ExploreSection";
 import { OnboardingGate } from "./onboarding/OnboardingGate";
 import { StateBlock, AlertIcon, InboxIcon, Spinner } from "./StateBlock";
 import { useCampaigns } from "@/lib/api/hooks";
@@ -55,6 +54,7 @@ export function Marketplace() {
 
         {!isLoading && !isError && items.length === 0 && (
           <StateBlock
+            className="w-full"
             icon={<InboxIcon />}
             title="No campaigns yet"
             description="Be the first brand to launch one — hit Create to fund a campaign and upload your source content."
@@ -74,8 +74,6 @@ export function Marketplace() {
                 <TrendingCard key={c.id} c={c} />
               ))}
             </ScrollRow>
-
-            <ExploreSection items={items} query={query} />
           </>
         )}
       </main>

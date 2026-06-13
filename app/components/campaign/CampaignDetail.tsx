@@ -4,9 +4,20 @@ import Link from "next/link";
 import { useCampaign, useMyAccount } from "@/lib/api/hooks";
 import { ApiError } from "@/lib/api/client";
 import { usdc } from "@/lib/campaigns";
+import { streamDownload, streamPlayer, streamThumbnail, streamUid } from "@/lib/cloudflareStream";
 import { StateBlock, AlertIcon, SearchOffIcon, Spinner } from "@/components/StateBlock";
+import { IconDownload, IconPlay } from "@/components/icons";
+import { YouTubeLogo, TikTokLogo, XLogo, InstagramLogo } from "@/components/create/platformIcons";
 import { PerformancePanel } from "./PerformancePanel";
 import { SubmitPanel } from "./SubmitPanel";
+
+const PLATFORM_LOGOS: Record<string, (p: { size?: number; className?: string }) => React.ReactElement> = {
+  youtube: YouTubeLogo,
+  tiktok: TikTokLogo,
+  x: XLogo,
+  twitter: XLogo,
+  instagram: InstagramLogo,
+};
 
 export function CampaignDetail({ id }: { id: string }) {
   const { data: campaign, isLoading, isError, error, refetch, isFetching } = useCampaign(id);
@@ -59,15 +70,65 @@ export function CampaignDetail({ id }: { id: string }) {
     account.walletAddress?.toLowerCase() === campaign.brandWallet.toLowerCase();
   const isClipper = account?.type === "clipper";
 
+  const uid = streamUid(campaign.sourceContentUrl);
+  const rules = (campaign.systemRules ?? "")
+    .split("\n")
+    .map((r) => r.trim())
+    .filter(Boolean);
+
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <header>
         <div className="flex items-center gap-2 text-xs text-cloud/50">
-          <span className="rounded-md bg-panel-2 px-2 py-0.5 capitalize">{campaign.status.replace("_", " ")}</span>
+          <span className="rounded-md bg-panel-2 px-2 py-0.5 capitalize">
+            {campaign.status.replace("_", " ")}
+          </span>
           <span>by {campaign.brandUsername}</span>
         </div>
         <h1 className="mt-2 font-display text-3xl font-bold text-cloud">{campaign.title}</h1>
         <p className="mt-2 leading-relaxed text-cloud/70">{campaign.description}</p>
+
+        {/* Source content preview */}
+        <div className="mt-5 overflow-hidden rounded-xl border border-hairline bg-panel">
+          {uid ? (
+            <a
+              href={streamPlayer(uid)}
+              target="_blank"
+              rel="noreferrer"
+              className="group relative block aspect-video w-full"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={streamThumbnail(uid, { width: 1280 })}
+                alt={`${campaign.title} source content`}
+                className="h-full w-full object-cover"
+              />
+              <span className="absolute inset-0 grid place-items-center bg-ink/30 transition group-hover:bg-ink/20">
+                <span className="grid h-14 w-14 place-items-center rounded-full bg-ink/70 text-cloud backdrop-blur-sm transition group-hover:scale-110">
+                  <IconPlay size={26} />
+                </span>
+              </span>
+            </a>
+          ) : (
+            <div className="grid aspect-video w-full place-items-center text-sm text-cloud/40">
+              No preview available
+            </div>
+          )}
+          <div className="flex items-center justify-between gap-3 border-t border-hairline px-4 py-2.5">
+            <span className="text-xs text-cloud/50">Source content</span>
+            {uid && (
+              <a
+                href={streamDownload(uid)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs font-medium text-cloud/80 transition hover:border-white/25 hover:text-cloud"
+              >
+                <IconDownload size={15} />
+                Download
+              </a>
+            )}
+          </div>
+        </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="rounded-xl border border-hairline bg-panel px-4 py-3">
@@ -82,23 +143,38 @@ export function CampaignDetail({ id }: { id: string }) {
           </div>
           <div className="rounded-xl border border-hairline bg-panel px-4 py-3">
             <p className="text-xs text-cloud/50">Platforms</p>
-            <p className="mt-1 text-sm text-cloud">{campaign.platforms.join(", ")}</p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              {campaign.platforms.map((p) => {
+                const Logo = PLATFORM_LOGOS[p.toLowerCase()];
+                return (
+                  <span
+                    key={p}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-panel-2 px-2 py-1 text-xs capitalize text-cloud"
+                  >
+                    {Logo && <Logo size={15} />}
+                    {p}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {campaign.systemRules && (
-          <p className="mt-4 rounded-lg border border-hairline bg-panel-2 p-3 text-sm text-cloud/70">
-            <span className="font-semibold text-cloud">Rules:</span> {campaign.systemRules}
-          </p>
+        {rules.length > 0 && (
+          <div className="mt-5">
+            <p className="text-xs font-medium text-cloud/50">Rules</p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {rules.map((rule, i) => (
+                <li
+                  key={i}
+                  className="rounded-full border border-hairline bg-panel-2 px-3 py-1 text-xs text-cloud/80"
+                >
+                  {rule}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
-        <a
-          href={campaign.sourceContentUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-4 inline-block text-sm text-distro underline underline-offset-2"
-        >
-          View source content
-        </a>
       </header>
 
       {ownsCampaign ? (

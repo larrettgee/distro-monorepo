@@ -1,4 +1,5 @@
 import type { Campaign as UiCampaign, Platform } from "@/lib/campaigns";
+import { streamThumbnail, streamUid } from "@/lib/cloudflareStream";
 import type { Campaign as ApiCampaign, CampaignStatus } from "./types";
 
 const PLATFORM_MAP: Record<string, Platform> = {
@@ -20,14 +21,14 @@ function statusLabel(s: CampaignStatus) {
 
 /** Map an API campaign onto the card view-model. */
 export function adaptCampaign(c: ApiCampaign): UiCampaign {
+  const uid = streamUid(c.sourceContentUrl);
   return {
     id: c.id,
     brand: c.brandUsername || shortWallet(c.brandWallet),
     handle: `@${c.brandUsername}`,
     title: c.title,
     category: "Tech",
-    // TODO: use the Cloudflare Stream thumbnail of sourceContentUrl once wired.
-    image: `https://picsum.photos/seed/${c.id}/640/440`,
+    image: uid ? streamThumbnail(uid, { width: 640 }) : `https://picsum.photos/seed/${c.id}/640/440`,
     platforms: c.platforms.map((p) => PLATFORM_MAP[p.toLowerCase()]).filter(Boolean) as Platform[],
     rewardPool: c.budgetUsdc,
     paidOut: 0,

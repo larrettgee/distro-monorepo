@@ -133,6 +133,19 @@ export const IconFilm = (p: IconProps) => (
   </Svg>
 );
 
+export const IconDownload = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+    <path d="M12 4v12M7.5 11.5 12 16l4.5-4.5" />
+  </Svg>
+);
+
+export const IconPlay = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none" />
+  </Svg>
+);
+
 export const IconX = (p: IconProps) => (
   <Svg {...p}>
     <path d="M6 6l12 12M18 6 6 18" />

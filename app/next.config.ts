@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "fastly.picsum.photos" },
       { protocol: "https", hostname: "*.cloudflarestream.com" },
+      { protocol: "https", hostname: "videodelivery.net" },
     ],
   },
   // Proxy the NestJS backend so the browser calls it same-origin (no CORS).

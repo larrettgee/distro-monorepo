@@ -6,14 +6,19 @@ export function StateBlock({
   title,
   description,
   action,
+  className,
 }: {
   icon?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
+  /** Override the wrapper width (defaults to a narrow centered card). */
+  className?: string;
 }) {
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center rounded-2xl border border-hairline bg-panel px-6 py-12 text-center">
+    <div
+      className={`mx-auto flex flex-col items-center rounded-2xl border border-hairline bg-panel px-6 py-12 text-center ${className ?? "max-w-sm"}`}
+    >
       {icon && (
         <div className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-panel-2 text-cloud/45">
           {icon}

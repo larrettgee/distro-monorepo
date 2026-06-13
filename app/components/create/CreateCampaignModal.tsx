@@ -6,8 +6,7 @@ import { writeContract, waitForTransactionReceipt, switchChain, getAccount } fro
 import { config as wagmiConfig } from "@/lib/wagmi";
 import { arcTestnet } from "@/lib/chains";
 import { distroEscrowAbi } from "@/lib/escrowAbi";
-import { api } from "@/lib/api/client";
-import { useCreateCampaign, useMyAccount } from "@/lib/api/hooks";
+import { useConfirmCampaign, useCreateCampaign, useMyAccount } from "@/lib/api/hooks";
 import { createCloudflareStreamDriver } from "@/lib/upload/cloudflareStreamDriver";
 import { VideoUploader } from "@/components/upload/VideoUploader";
 import type { UploadAsset } from "@/lib/upload/types";
@@ -36,9 +35,10 @@ const RULE_PRESETS = [
 type Phase = "form" | "creating" | "funding" | "confirming" | "activating" | "done";
 
 export function CreateCampaignModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { ready, authenticated, login, getAccessToken } = usePrivy();
+  const { ready, authenticated, login } = usePrivy();
   const { data: account } = useMyAccount();
   const createCampaign = useCreateCampaign();
+  const confirmCampaign = useConfirmCampaign();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -52,7 +52,7 @@ export function CreateCampaignModal({ open, onClose }: { open: boolean; onClose:
   const [error, setError] = useState<string | null>(null);
 
   const isBrand = account?.type === "brand";
-  const sourceContentUrl = asset ? (asset.url ?? `https://cloudflarestream.com/${asset.id}`) : "";
+  const sourceContentUrl = asset ? (asset.url ?? `https://iframe.cloudflarestream.com/${asset.id}`) : "";
   const budgetNum = Number(budget);
   const rateNum = Number(rate);
   const canSubmit =
@@ -113,7 +113,7 @@ export function CreateCampaignModal({ open, onClose }: { open: boolean; onClose:
       await waitForTransactionReceipt(wagmiConfig, { hash });
 
       setPhase("activating");
-      await api.campaigns.confirm(campaign.id, hash, await getAccessToken());
+      await confirmCampaign.mutateAsync({ id: campaign.id, txHash: hash });
 
       setPhase("done");
       setTimeout(onClose, 1400);

@@ -81,6 +81,20 @@ export function useCreateCampaign() {
   });
 }
 
+/** Confirm on-chain funding; flips the campaign to `active`. */
+export function useConfirmCampaign() {
+  const { getAccessToken } = usePrivy();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, txHash }: { id: string; txHash: string }) =>
+      api.campaigns.confirm(id, txHash, await getAccessToken()),
+    onSuccess: (_result, { id }) => {
+      qc.invalidateQueries({ queryKey: ["campaigns"] });
+      qc.invalidateQueries({ queryKey: ["campaign", id] });
+    },
+  });
+}
+
 // ─── Brand ───
 
 /** The signed-in brand's campaigns across all statuses. */

@@ -43,10 +43,15 @@ export function createCloudflareStreamDriver(opts: CloudflareStreamOptions = {})
             }),
           onError: (err) => reject(err instanceof Error ? err : new Error(String(err))),
           onSuccess: () => {
-            const url =
-              mediaId && opts.customerSubdomain
+            // Prefer the account's customer subdomain when configured; otherwise
+            // fall back to the universal player domain, which works for any
+            // account without a subdomain. (`cloudflarestream.com/<id>` is NOT a
+            // valid playback URL and 404s.)
+            const url = mediaId
+              ? opts.customerSubdomain
                 ? `https://${opts.customerSubdomain}.cloudflarestream.com/${mediaId}/iframe`
-                : undefined;
+                : `https://iframe.cloudflarestream.com/${mediaId}`
+              : undefined;
             resolve({
               id: mediaId ?? "unknown",
               url,

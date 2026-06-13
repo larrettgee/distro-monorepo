@@ -45,6 +45,7 @@ export function BrandDashboard() {
       ) : !campaigns || campaigns.length === 0 ? (
         <div className="mt-6">
           <StateBlock
+            className="w-full"
             icon={<InboxIcon />}
             title="No campaigns yet"
             description="Create your first campaign to fund a bounty and start getting clips."
