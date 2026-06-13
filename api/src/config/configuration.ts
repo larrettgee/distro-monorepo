@@ -27,6 +27,10 @@ export interface AppConfig {
     usdcDecimals: number;
     operatorAddress: string;
   };
+  cre: {
+    /** Shared secret the Chainlink CRE workflow sends to fetch the daily batch. */
+    apiKey: string;
+  };
   worldId: {
     appId: string;
     rpId: string;
@@ -69,6 +73,9 @@ export default (): AppConfig => ({
     // the wei level even though USDC is logically 6 decimals.
     usdcDecimals: parseInt(process.env.USDC_DECIMALS ?? '18', 10),
     operatorAddress: process.env.ESCROW_OPERATOR_ADDRESS ?? '',
+  },
+  cre: {
+    apiKey: process.env.CRE_API_KEY ?? '',
   },
   worldId: {
     appId: process.env.WORLD_ID_APP_ID ?? '',

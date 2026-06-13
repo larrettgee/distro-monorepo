@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -51,12 +59,26 @@ export class ClippersController {
   @Post('channel/connect/verify')
   @ApiOperation({
     summary: 'Verify YouTube channel connection',
-    description: 'Checks the channel bio for the issued code and links the channel.',
+    description:
+      'Checks the channel bio for the issued code and adds the channel to the clipper.',
   })
   @ApiOkResponse({ type: ClipperProfileResponseDto })
   verifyConnect(
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ClipperProfileResponseDto> {
     return this.clippersService.verifyConnect(user.privyId);
+  }
+
+  @Delete('channel/:channelId')
+  @ApiOperation({
+    summary: 'Disconnect a connected channel',
+    description: 'Removes a previously verified channel from the clipper.',
+  })
+  @ApiOkResponse({ type: ClipperProfileResponseDto })
+  disconnectChannel(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('channelId') channelId: string,
+  ): Promise<ClipperProfileResponseDto> {
+    return this.clippersService.disconnectChannel(user.privyId, channelId);
   }
 }

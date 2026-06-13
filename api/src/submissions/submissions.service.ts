@@ -46,12 +46,12 @@ export class SubmissionsService {
       throw new BadRequestException('Campaign is not accepting submissions.');
     }
 
-    const channelId = await this.clippersService.getConnectedChannelId(
+    const channelIds = await this.clippersService.getConnectedChannelIds(
       user.privyId,
     );
-    if (!channelId) {
+    if (channelIds.length === 0) {
       throw new BadRequestException(
-        'Connect and verify your YouTube channel before submitting.',
+        'Connect and verify a YouTube channel before submitting.',
       );
     }
 
@@ -64,7 +64,7 @@ export class SubmissionsService {
           await this.validateAndCreate(
             user,
             campaignId,
-            channelId,
+            channelIds,
             url,
           ),
         );
@@ -103,13 +103,13 @@ export class SubmissionsService {
   private async validateAndCreate(
     user: AuthenticatedUser,
     campaignId: string,
-    channelId: string,
+    channelIds: string[],
     url: string,
   ): Promise<SubmissionResponseDto> {
     const video = await this.youtubeService.getVideoInfo(url);
-    if (video.channel.channelId !== channelId) {
+    if (!channelIds.includes(video.channel.channelId)) {
       throw new BadRequestException(
-        'Video is not published by your connected channel.',
+        'Video is not published by one of your connected channels.',
       );
     }
 

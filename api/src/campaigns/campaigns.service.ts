@@ -123,6 +123,18 @@ export class CampaignsService {
     return campaigns.map((c) => this.toResponse(c));
   }
 
+  /**
+   * Active campaigns confirmed on-chain (have a job id). Returns raw documents
+   * for internal cross-module use (e.g. the CRE daily batch), mirroring
+   * `findById`. Sorted ascending by creation for deterministic batch ordering.
+   */
+  async findActiveOnchainDocs(): Promise<CampaignDocument[]> {
+    return this.campaignModel
+      .find({ status: 'active', onchainJobId: { $exists: true, $ne: null } })
+      .sort({ createdAt: 1 })
+      .exec();
+  }
+
   async findOne(id: string): Promise<CampaignResponseDto> {
     return this.toResponse(await this.findById(id));
   }

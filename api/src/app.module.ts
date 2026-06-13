@@ -8,7 +8,9 @@ import { BlockchainModule } from './blockchain/blockchain.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
 import { ClippersModule } from './clippers/clippers.module';
 import configuration from './config/configuration';
+import { CreModule } from './cre/cre.module';
 import { DatabaseModule } from './database/database.module';
+import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { SubmissionsModule } from './submissions/submissions.module';
 import { WorldIdModule } from './worldid/worldid.module';
 import { YoutubeModule } from './youtube/youtube.module';
@@ -28,7 +30,9 @@ import { YoutubeModule } from './youtube/youtube.module';
     CampaignsModule,
     ClippersModule,
     SubmissionsModule,
+    LeaderboardModule,
     YoutubeModule,
+    CreModule,
   ],
   controllers: [AppController],
   providers: [AppService],
