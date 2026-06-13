@@ -1,5 +1,6 @@
 import { ConnectWallet } from "./ConnectWallet";
-import { IconSearch, IconPlus } from "./icons";
+import { CreateButton } from "./CreateButton";
+import { IconSearch } from "./icons";
 
 export function Topbar({
   query,
@@ -15,7 +16,7 @@ export function Topbar({
         <input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search campaigns and projects…"
+          placeholder="Search campaigns and brands…"
           className="h-full w-full bg-transparent text-sm outline-none placeholder:text-cloud/40"
         />
         <kbd className="hidden rounded border border-hairline px-1.5 py-0.5 font-sans text-[11px] text-cloud/40 sm:block">
@@ -23,13 +24,9 @@ export function Topbar({
         </kbd>
       </label>
 
-      <a
-        href="#"
-        className="hidden h-10 items-center gap-1.5 rounded-lg border border-hairline px-3.5 text-sm font-semibold text-cloud transition-colors hover:border-white/20 hover:bg-panel sm:flex"
-      >
-        <IconPlus size={17} />
+      <CreateButton variant="outline" className="hidden h-10 px-3.5 sm:flex">
         Create
-      </a>
+      </CreateButton>
 
       <ConnectWallet />
     </header>

@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { campaigns, categories, type Category } from "@/lib/campaigns";
+import { useMemo, useState } from "react";
+import type { Campaign } from "@/lib/campaigns";
 import { CampaignCard } from "./CampaignCard";
 import { IconGrid } from "./icons";
 
-type Filter = "All" | Category;
-const filters: Filter[] = ["All", ...categories];
+export function ExploreSection({ items, query }: { items: Campaign[]; query: string }) {
+  const [active, setActive] = useState<string>("All");
 
-export function ExploreSection({ query }: { query: string }) {
-  const [active, setActive] = useState<Filter>("All");
+  const filters = useMemo(
+    () => ["All", ...Array.from(new Set(items.map((c) => c.category)))],
+    [items],
+  );
 
   const q = query.trim().toLowerCase();
-  const results = campaigns.filter((c) => {
+  const results = items.filter((c) => {
     const matchesCat = active === "All" || c.category === active;
     const matchesQuery =
       q === "" || `${c.brand} ${c.title} ${c.handle} ${c.category}`.toLowerCase().includes(q);

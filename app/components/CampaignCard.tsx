@@ -1,12 +1,14 @@
+import Link from "next/link";
 import { type Campaign, usdcCompact } from "@/lib/campaigns";
 import { Thumb } from "./Thumb";
-import { ClipButton } from "./ClipButton";
 
 export function CampaignCard({ c }: { c: Campaign }) {
   const pct = Math.min(100, Math.round((c.paidOut / c.rewardPool) * 100));
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-xl border border-hairline bg-panel transition duration-200 hover:-translate-y-0.5 hover:border-distro/40">
+    <Link
+      href={`/campaign/${c.id}`}
+      className="group flex flex-col overflow-hidden rounded-xl border border-hairline bg-panel transition duration-200 hover:-translate-y-0.5 hover:border-distro/40">
       <Thumb c={c} className="h-32" sizes="(max-width: 640px) 100vw, 300px">
         <p
           className="absolute bottom-2.5 left-2.5 font-display text-xl font-bold text-white"
@@ -26,7 +28,7 @@ export function CampaignCard({ c }: { c: Campaign }) {
 
         <div className="mt-3 flex items-center justify-between text-xs">
           <span className="font-display font-bold text-distro">${c.ratePer1k.toFixed(2)} / 1k</span>
-          <span className="text-cloud/45">{c.timeLeft} left</span>
+          <span className="text-cloud/45">{c.timeLeft}</span>
         </div>
 
         <div className="mt-2.5">
@@ -46,11 +48,7 @@ export function CampaignCard({ c }: { c: Campaign }) {
             </span>
           ))}
         </div>
-
-        <div className="mt-3.5">
-          <ClipButton project={c.brand} />
-        </div>
       </div>
-    </article>
+    </Link>
   );
 }

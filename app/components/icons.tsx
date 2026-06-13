@@ -118,3 +118,44 @@ export const IconGrid = (p: IconProps) => (
     <rect x="13" y="13" width="7" height="7" rx="1.5" />
   </Svg>
 );
+
+export const IconUpload = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+    <path d="M12 16V4M7.5 8.5 12 4l4.5 4.5" />
+  </Svg>
+);
+
+export const IconFilm = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4" />
+  </Svg>
+);
+
+export const IconX = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Svg>
+);
+
+export const IconCheck = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M5 12.5 10 17.5 19 7.5" />
+  </Svg>
+);
+
+export const IconCopy = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="9" y="9" width="11" height="11" rx="2" />
+    <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+  </Svg>
+);
+
+export const IconLogout = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" />
+    <path d="M10 17 5 12l5-5" />
+    <path d="M5 12h12" />
+  </Svg>
+);

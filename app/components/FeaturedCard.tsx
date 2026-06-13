@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { type Campaign, usdcCompact } from "@/lib/campaigns";
 import { Thumb } from "./Thumb";
 import { IconClock, IconUsers } from "./icons";
 
 export function FeaturedCard({ c }: { c: Campaign }) {
   return (
-    <article className="group flex w-[360px] shrink-0 cursor-pointer gap-3 rounded-xl border border-hairline bg-panel p-3 transition duration-200 hover:-translate-y-0.5 hover:border-distro/40">
+    <Link
+      href={`/campaign/${c.id}`}
+      className="group flex w-[360px] shrink-0 cursor-pointer gap-3 rounded-xl border border-hairline bg-panel p-3 transition duration-200 hover:-translate-y-0.5 hover:border-distro/40">
       <Thumb c={c} className="h-28 w-28 shrink-0 rounded-lg" sizes="112px" />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -18,7 +21,7 @@ export function FeaturedCard({ c }: { c: Campaign }) {
         <div className="mt-auto flex items-center justify-between pt-2">
           <span className="flex items-center gap-1.5 text-xs text-cloud/45">
             <IconClock size={14} />
-            {c.timeLeft} left
+            {c.timeLeft}
           </span>
           <span className="flex items-center gap-2 text-xs text-cloud/70">
             {c.handle}
@@ -29,6 +32,6 @@ export function FeaturedCard({ c }: { c: Campaign }) {
           </span>
         </div>
       </div>
-    </article>
+    </Link>
   );
 }

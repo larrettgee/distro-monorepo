@@ -16,7 +16,7 @@ const sans = Inter({
 
 const title = "Distro — Clip it. Spread it. Get paid.";
 const description =
-  "The onchain clipping marketplace. Projects fund reward pools, clippers earn USDC for reach. Live on Arc Testnet.";
+  "The onchain clipping marketplace. Brands fund reward pools, clippers earn USDC for reach. Live on Arc Testnet.";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {

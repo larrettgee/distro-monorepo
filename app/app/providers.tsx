@@ -6,6 +6,12 @@ import { WagmiProvider } from "@privy-io/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { config } from "@/lib/wagmi";
 import { arcTestnet } from "@/lib/chains";
+import { UploadProvider } from "@/components/upload/UploadProvider";
+import { CreateCampaignProvider } from "@/components/create/CreateCampaignProvider";
+import { ClipperConnectProvider } from "@/components/clipper/ClipperConnectProvider";
+import { createCloudflareStreamDriver } from "@/lib/upload/cloudflareStreamDriver";
+
+const uploadDriver = createCloudflareStreamDriver();
 
 const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
 
@@ -34,7 +40,13 @@ export function Providers({ children }: { children: ReactNode }) {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={config}>{children}</WagmiProvider>
+        <WagmiProvider config={config}>
+          <UploadProvider driver={uploadDriver}>
+            <CreateCampaignProvider>
+              <ClipperConnectProvider>{children}</ClipperConnectProvider>
+            </CreateCampaignProvider>
+          </UploadProvider>
+        </WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
   );

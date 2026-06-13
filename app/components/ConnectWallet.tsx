@@ -5,15 +5,58 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import {
   useAccount,
   useBalance,
+  useDisconnect,
   useSendTransaction,
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { useSetActiveWallet } from "@privy-io/wagmi";
 import { isAddress, parseUnits } from "viem";
 import { arcTestnet } from "@/lib/chains";
+import { ArcMark } from "@/components/ArcMark";
+import { VerifyWorldId } from "@/components/VerifyWorldId";
+import { IconCopy, IconCheck, IconLogout } from "@/components/icons";
+import { useMyAccount } from "@/lib/api/hooks";
 
 function shortAddress(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
+/** World ID status worn on the account button: a shield, marked + colored by state. */
+function VerifyMark({ status }: { status: "verified" | "unverified" }) {
+  const verified = status === "verified";
+  return (
+    <span
+      title={
+        verified
+          ? "World ID verified"
+          : "Unverified — verify with World ID to unlock payouts"
+      }
+      aria-label={verified ? "World ID verified" : "Account unverified"}
+      className={verified ? "text-distro" : "text-red-400"}
+    >
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M12 2 4 5v6c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V5l-8-3Z" />
+        {verified ? (
+          <path d="m9 12 2 2 4-4" />
+        ) : (
+          <>
+            <line x1="12" y1="8" x2="12" y2="12.5" />
+            <circle cx="12" cy="15.5" r="0.6" fill="currentColor" stroke="none" />
+          </>
+        )}
+      </svg>
+    </span>
+  );
 }
 
 export function ConnectWallet() {
@@ -21,20 +64,42 @@ export function ConnectWallet() {
   const { wallets } = useWallets();
   const { setActiveWallet } = useSetActiveWallet();
   const { address: wagmiAddress, chainId } = useAccount();
+  const { disconnect } = useDisconnect();
+  const { data: account } = useMyAccount();
 
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [withdrawSoon, setWithdrawSoon] = useState(false);
+  // Send-USDC logic is kept wired up below but no longer surfaced in the UI.
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
 
-  // Make the Privy wallet the active wagmi account so balance/send work.
+  // Keep the active wagmi account in sync with Privy's connected wallets so
+  // balance/send work — and so a wallet left connected by a previous session
+  // (e.g. an external wallet wagmi didn't disconnect on logout) can't linger as
+  // the displayed address. Switch whenever the active wagmi address isn't one
+  // of the wallets Privy currently has linked.
   useEffect(() => {
-    if (authenticated && !wagmiAddress && wallets.length > 0) {
-      void setActiveWallet(wallets[0]);
-    }
+    if (!authenticated || wallets.length === 0) return;
+    const inSync = wallets.some(
+      (w) => w.address.toLowerCase() === wagmiAddress?.toLowerCase(),
+    );
+    if (!inSync) void setActiveWallet(wallets[0]);
   }, [authenticated, wagmiAddress, wallets, setActiveWallet]);
 
-  const address = wagmiAddress ?? (user?.wallet?.address as `0x${string}` | undefined);
+  // Prefer Privy's linked wallet as the source of truth; fall back to wagmi.
+  const address =
+    (wallets[0]?.address as `0x${string}` | undefined) ??
+    wagmiAddress ??
+    (user?.wallet?.address as `0x${string}` | undefined);
+
+  // Tear down wagmi's connector alongside Privy so no external wallet survives
+  // logout and reappears on the next sign-in.
+  async function handleLogout() {
+    setOpen(false);
+    disconnect();
+    await logout();
+  }
 
   const { data: balance, refetch: refetchBalance } = useBalance({ address });
   const {
@@ -93,7 +158,10 @@ export function ConnectWallet() {
     recipientValid && value !== undefined && value > BigInt(0) && hasFunds && onArc && !busy;
 
   const balanceLabel = balance
-    ? `${Number(balance.formatted).toLocaleString("en-US", { maximumFractionDigits: 4 })} ${balance.symbol}`
+    ? `$${Number(balance.formatted).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`
     : "…";
   const explorerTx = hash
     ? `${arcTestnet.blockExplorers.default.url}/tx/${hash}`
@@ -118,33 +186,56 @@ export function ConnectWallet() {
         onClick={() => setOpen((v) => !v)}
         className={`${base} flex items-center gap-2 border border-hairline bg-panel text-cloud transition-colors hover:border-white/20`}
       >
-        <span
-          className={`h-2 w-2 rounded-full ${onArc ? "bg-distro" : "bg-amber-400"}`}
-          aria-hidden
-        />
-        {address ? shortAddress(address) : "Account"}
+        {onArc ? (
+          <ArcMark size={16} />
+        ) : (
+          <span className="h-2 w-2 rounded-full bg-amber-400" aria-hidden />
+        )}
+        {account?.username ?? (address ? shortAddress(address) : "Account")}
+        {account?.initialized && account.verificationStatus && (
+          <VerifyMark status={account.verificationStatus} />
+        )}
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
 
-          <div className="absolute right-0 z-50 mt-2 w-80 rounded-2xl border border-hairline bg-panel p-4 shadow-xl shadow-black/40">
+          <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-2xl border border-hairline bg-panel p-4 shadow-xl shadow-black/40">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-sm font-medium text-cloud">
-                <span
-                  className={`h-2 w-2 rounded-full ${onArc ? "bg-distro" : "bg-amber-400"}`}
-                  aria-hidden
-                />
+                {onArc ? (
+                  <ArcMark size={16} />
+                ) : (
+                  <span className="h-2 w-2 rounded-full bg-amber-400" aria-hidden />
+                )}
                 {onArc ? "Arc Testnet" : "Wrong network"}
               </span>
-              <button
-                onClick={copyAddress}
-                className="rounded-md px-2 py-1 font-mono text-xs text-cloud/70 transition-colors hover:bg-panel-2"
-                title="Copy address"
-              >
-                {address ? shortAddress(address) : "—"} · {copied ? "Copied" : "Copy"}
-              </button>
+              <div className="flex items-center gap-1">
+                <span className="font-mono text-xs text-cloud/45">
+                  {address ? shortAddress(address) : "—"}
+                </span>
+                <button
+                  onClick={copyAddress}
+                  className="grid h-7 w-7 place-items-center rounded-md text-cloud/50 transition-colors hover:bg-panel-2 hover:text-cloud"
+                  title={copied ? "Copied" : "Copy address"}
+                  aria-label="Copy address"
+                >
+                  {copied ? (
+                    <IconCheck size={15} className="text-distro" />
+                  ) : (
+                    <IconCopy size={15} />
+                  )}
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="grid h-7 w-7 place-items-center rounded-md text-cloud/50 transition-colors hover:bg-panel-2 hover:text-amber-200"
+                  title="Disconnect"
+                  aria-label="Disconnect"
+                >
+                  <IconLogout size={15} />
+                </button>
+              </div>
             </div>
 
             <div className="mt-3 rounded-xl bg-panel-2 px-4 py-3">
@@ -152,63 +243,17 @@ export function ConnectWallet() {
               <p className="font-display text-2xl font-bold text-distro">{balanceLabel}</p>
             </div>
 
-            <div className="mt-4 space-y-2">
-              <p className="text-xs text-cloud/50">Send {balance?.symbol ?? "USDC"}</p>
-              <input
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                placeholder="Recipient address (0x…)"
-                spellCheck={false}
-                className="w-full rounded-lg border border-hairline bg-ink px-3 py-2 font-mono text-xs text-cloud outline-none placeholder:text-cloud/30 focus:border-white/25"
-              />
-              <input
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                inputMode="decimal"
-                placeholder="0.00"
-                className="w-full rounded-lg border border-hairline bg-ink px-3 py-2 text-sm text-cloud outline-none placeholder:text-cloud/30 focus:border-white/25"
-              />
-
-              <button
-                onClick={onSend}
-                disabled={!canSend}
-                className="w-full rounded-lg bg-distro px-3 py-2 text-sm font-semibold text-ink transition hover:bg-mint active:scale-[0.98] disabled:opacity-50"
-              >
-                {isPending ? "Confirm in wallet…" : isConfirming ? "Sending…" : "Send"}
-              </button>
-
-              {to.length > 0 && !recipientValid && (
-                <p className="text-xs text-amber-300">Enter a valid address.</p>
-              )}
-              {value !== undefined && balance !== undefined && !hasFunds && (
-                <p className="text-xs text-amber-300">Amount exceeds balance.</p>
-              )}
-              {isSuccess && explorerTx && (
-                <a
-                  href={explorerTx}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block text-xs text-distro underline"
-                >
-                  Sent ✓ — view on Arcscan
-                </a>
-              )}
-              {sendError && (
-                <p className="text-xs text-red-300">
-                  {sendError.message.split("\n")[0].slice(0, 100)}
-                </p>
-              )}
-            </div>
-
             <button
               onClick={() => {
-                setOpen(false);
-                logout();
+                setWithdrawSoon(true);
+                setTimeout(() => setWithdrawSoon(false), 1600);
               }}
-              className="mt-4 w-full rounded-lg border border-hairline px-3 py-2 text-sm font-medium text-cloud/70 transition-colors hover:border-amber-400/50 hover:text-amber-200"
+              className="mt-4 w-full rounded-lg bg-distro px-3 py-2.5 text-sm font-semibold text-ink transition hover:bg-mint active:scale-[0.98]"
             >
-              Disconnect
+              {withdrawSoon ? "Coming soon" : "Withdraw to Bank"}
             </button>
+
+            <VerifyWorldId />
           </div>
         </>
       )}
