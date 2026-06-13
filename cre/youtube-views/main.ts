@@ -1,111 +1,141 @@
 import {
   CronCapability,
+  HTTPCapability,
   HTTPClient,
   EVMClient,
   ConsensusAggregationByFields,
-  median,
+  identical,
   handler,
   Runner,
   prepareReportRequest,
   bytesToHex,
   ok,
-  json,
+  text,
   type Runtime,
   type HTTPSendRequester,
+  type HTTPPayload,
 } from "@chainlink/cre-sdk"
 import { encodeAbiParameters, parseAbiParameters } from "viem"
 import { z } from "zod"
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const videoSchema = z.object({
-  videoId: z.string(),
-  recipient: z.string(), // 0x-prefixed clipper wallet
-})
-
 const configSchema = z.object({
   schedule: z.string(),
-  youtubeApiBaseUrl: z.string(),
+  // Base URL of the Distro API (serves the daily on-chain payout batch).
+  apiBaseUrl: z.string(),
   // Numeric CRE chain selector (Arc testnet = 3034092155422581607).
   chainSelector: z.string(),
-  // EscrowViewsReporter adapter — set as the job operator on DistroEscrow.
-  reporterAddress: z.string(),
-  jobId: z.string(), // uint256 as string
   gasLimit: z.string(),
-  videos: z.array(videoSchema).min(1),
 })
 
 type Config = z.infer<typeof configSchema>
 
-// ─── YouTube API response ─────────────────────────────────────────────────────
+// ─── Distro API batch response ────────────────────────────────────────────────
 
-const youtubeResponseSchema = z.object({
-  items: z.array(z.object({ statistics: z.object({ viewCount: z.string() }) })).min(1),
+const batchSchema = z.object({
+  dateKey: z.string(),
+  chainId: z.number(),
+  generatedAt: z.string(),
+  jobs: z.array(
+    z.object({
+      jobId: z.number(),
+      reporterAddress: z.string(), // EscrowViewsReporter (the job operator)
+      recipients: z.array(
+        z.object({
+          wallet: z.string(),
+          cumulativeViews: z.number(),
+        }),
+      ),
+    }),
+  ),
 })
 
-// ─── Handler ───────────────────────────────────────────────────────────────────
+// ─── Settlement ──────────────────────────────────────────────────────────────
 
-const onCronTrigger = (runtime: Runtime<Config>): string => {
+// Shared by the daily cron and the on-demand HTTP trigger: pull the batch from
+// the Distro API and record each job's cumulative views on-chain.
+const settle = (runtime: Runtime<Config>): string => {
   const cfg = runtime.config
   const httpClient = new HTTPClient()
   const evmClient = new EVMClient(BigInt(cfg.chainSelector))
 
-  // Secrets resolve in DON mode; the value is captured into the node-mode
-  // closure below (getSecret itself is not callable inside node mode).
-  const apiKey = runtime.getSecret({ id: "YOUTUBE_API_KEY" }).result().value
-  if (!apiKey) throw new Error("YOUTUBE_API_KEY secret is empty")
+  // API key resolves in DON mode; captured into the node-mode fetch closure.
+  const apiKey = runtime.getSecret({ id: "DISTRO_API_KEY" }).result().value
+  if (!apiKey) throw new Error("DISTRO_API_KEY secret is empty")
 
-  const recipients: `0x${string}`[] = []
-  const cumulativeViews: bigint[] = []
+  const url = `${cfg.apiBaseUrl}/cre/batch`
 
-  for (const video of cfg.videos) {
-    const url = `${cfg.youtubeApiBaseUrl}?part=statistics&id=${video.videoId}&key=${apiKey}`
-
-    // Runs on each DON node; nodes median the view count so a minority seeing a
-    // stale/different value cannot skew the recorded total.
-    const fetchViews = (sendRequester: HTTPSendRequester): { views: number } => {
-      const response = sendRequester.sendRequest({ url, method: "GET" }).result()
-      if (!ok(response)) {
-        throw new Error(`YouTube HTTP ${response.statusCode} for video ${video.videoId}`)
-      }
-      const data = youtubeResponseSchema.parse(json(response))
-      return { views: Number(data.items[0].statistics.viewCount) }
+  // Every DON node fetches the same persisted daily snapshot, so we require the
+  // raw response body to be identical across nodes before acting on it.
+  const fetchBatch = (req: HTTPSendRequester): { body: string } => {
+    const response = req
+      .sendRequest({ url, method: "GET", headers: { "x-cre-api-key": apiKey } })
+      .result()
+    if (!ok(response)) {
+      throw new Error(`Distro API HTTP ${response.statusCode}`)
     }
-
-    const consensus = ConsensusAggregationByFields<{ views: number }>({ views: median })
-    const { views } = httpClient.sendRequest(runtime, fetchViews, consensus)().result()
-
-    recipients.push(video.recipient as `0x${string}`)
-    cumulativeViews.push(BigInt(Math.trunc(views)))
-    runtime.log(`Video ${video.videoId} -> ${video.recipient}: ${views} views`)
+    return { body: text(response) }
   }
 
-  // Encode exactly what EscrowViewsReporter.onReport decodes.
-  const encodedPayload = encodeAbiParameters(parseAbiParameters("uint256, address[], uint256[]"), [
-    BigInt(cfg.jobId),
-    recipients,
-    cumulativeViews,
-  ])
+  const consensus = ConsensusAggregationByFields<{ body: string }>({ body: identical })
+  const { body } = httpClient.sendRequest(runtime, fetchBatch, consensus)().result()
 
-  const signedReport = runtime.report(prepareReportRequest(encodedPayload)).result()
+  const batch = batchSchema.parse(JSON.parse(body))
+  runtime.log(`Batch ${batch.dateKey}: ${batch.jobs.length} job(s)`)
 
-  // The SDK converts `receiver` (hex) → bytes and `gasConfig` (JSON) internally.
-  const writeResult = evmClient
-    .writeReport(runtime, {
-      receiver: cfg.reporterAddress,
-      report: signedReport,
-      gasConfig: { gasLimit: cfg.gasLimit },
-    })
-    .result()
+  let recorded = 0
+  for (const job of batch.jobs) {
+    if (job.recipients.length === 0) {
+      runtime.log(`Job ${job.jobId}: no recipients, skipping`)
+      continue
+    }
 
-  const txHash = writeResult.txHash ? bytesToHex(writeResult.txHash) : "(none)"
-  runtime.log(`Recorded views for job ${cfg.jobId} — tx ${txHash} status=${writeResult.txStatus}`)
-  return txHash
+    const recipients = job.recipients.map((r) => r.wallet as `0x${string}`)
+    const views = job.recipients.map((r) => BigInt(Math.trunc(r.cumulativeViews)))
+
+    const encoded = encodeAbiParameters(parseAbiParameters("uint256, address[], uint256[]"), [
+      BigInt(job.jobId),
+      recipients,
+      views,
+    ])
+    const signedReport = runtime.report(prepareReportRequest(encoded)).result()
+
+    const writeResult = evmClient
+      .writeReport(runtime, {
+        receiver: job.reporterAddress,
+        report: signedReport,
+        gasConfig: { gasLimit: cfg.gasLimit },
+      })
+      .result()
+
+    const txHash = writeResult.txHash ? bytesToHex(writeResult.txHash) : "(none)"
+    runtime.log(
+      `Job ${job.jobId}: ${recipients.length} recipient(s) -> tx ${txHash} status=${writeResult.txStatus}`,
+    )
+    recorded++
+  }
+
+  return `recorded ${recorded}/${batch.jobs.length} job(s) for ${batch.dateKey}`
 }
+
+// ─── Handlers ──────────────────────────────────────────────────────────────────
+
+const onCronTrigger = (runtime: Runtime<Config>): string => settle(runtime)
+
+// On-demand trigger (e.g. for a live demo): POST to the DON's trigger URL runs
+// the same settlement immediately, in addition to the daily cron.
+const onHttpTrigger = (runtime: Runtime<Config>, _payload: HTTPPayload): string => settle(runtime)
 
 const initWorkflow = (config: Config) => {
   const cron = new CronCapability()
-  return [handler(cron.trigger({ schedule: config.schedule }), onCronTrigger)]
+  const http = new HTTPCapability()
+  return [
+    handler(cron.trigger({ schedule: config.schedule }), onCronTrigger),
+    // Empty authorizedKeys accepts any caller — fine for testnet/demo. For a
+    // hardened deployment, list the authorized sender public keys here.
+    handler(http.trigger({ authorizedKeys: [] }), onHttpTrigger),
+  ]
 }
 
 export async function main() {

@@ -1,14 +1,6 @@
 {
-  "schedule": "0 */5 * * * *",
-  "youtubeApiBaseUrl": "https://www.googleapis.com/youtube/v3/videos",
+  "schedule": "0 0 0 * * *",
+  "apiBaseUrl": "https://distro-buzz-api-92e5f912a4a8.herokuapp.com",
   "chainSelector": "3034092155422581607",
-  "reporterAddress": "0x78203f4Dd20968808cFD05A094e9cCfF4E781089",
-  "jobId": "3",
-  "gasLimit": "1000000",
-  "videos": [
-    {
-      "videoId": "dQw4w9WgXcQ",
-      "recipient": "0x000000000000000000000000000000000000dEaD"
-    }
-  ]
+  "gasLimit": "2000000"
 }

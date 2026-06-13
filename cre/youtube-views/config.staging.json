@@ -1,14 +1,6 @@
 {
-  "schedule": "*/30 * * * * *",
-  "youtubeApiBaseUrl": "https://www.googleapis.com/youtube/v3/videos",
+  "schedule": "0 0 0 * * *",
+  "apiBaseUrl": "http://localhost:3001",
   "chainSelector": "3034092155422581607",
-  "reporterAddress": "0xCE430789Ddf7c55cd7b99E8B2D596e75c140a74d",
-  "jobId": "2",
-  "gasLimit": "1000000",
-  "videos": [
-    {
-      "videoId": "dQw4w9WgXcQ",
-      "recipient": "0x000000000000000000000000000000000000dEaD"
-    }
-  ]
+  "gasLimit": "2000000"
 }

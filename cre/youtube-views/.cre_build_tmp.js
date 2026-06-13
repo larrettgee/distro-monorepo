@@ -8181,11 +8181,50 @@ class ClientCapability2 {
     return runtime.runInNodeMode(wrappedFn, consensusAggregation, unwrapOptions);
   }
 }
+var file_capabilities_networking_http_v1alpha_trigger = /* @__PURE__ */ fileDesc("CjJjYXBhYmlsaXRpZXMvbmV0d29ya2luZy9odHRwL3YxYWxwaGEvdHJpZ2dlci5wcm90bxIkY2FwYWJpbGl0aWVzLm5ldHdvcmtpbmcuaHR0cC52MWFscGhhIlYKBkNvbmZpZxJMCg9hdXRob3JpemVkX2tleXMYASADKAsyMy5jYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGEuQXV0aG9yaXplZEtleSJaCgdQYXlsb2FkEg0KBWlucHV0GAEgASgMEkAKA2tleRgCIAEoCzIzLmNhcGFiaWxpdGllcy5uZXR3b3JraW5nLmh0dHAudjFhbHBoYS5BdXRob3JpemVkS2V5ImAKDUF1dGhvcml6ZWRLZXkSOwoEdHlwZRgBIAEoDjItLmNhcGFiaWxpdGllcy5uZXR3b3JraW5nLmh0dHAudjFhbHBoYS5LZXlUeXBlEhIKCnB1YmxpY19rZXkYAiABKAkqOwoHS2V5VHlwZRIYChRLRVlfVFlQRV9VTlNQRUNJRklFRBAAEhYKEktFWV9UWVBFX0VDRFNBX0VWTRABMpIBCgRIVFRQEmgKB1RyaWdnZXISLC5jYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGEuQ29uZmlnGi0uY2FwYWJpbGl0aWVzLm5ldHdvcmtpbmcuaHR0cC52MWFscGhhLlBheWxvYWQwARoggrUYHAgBEhhodHRwLXRyaWdnZXJAMS4wLjAtYWxwaGFC6wEKKGNvbS5jYXBhYmlsaXRpZXMubmV0d29ya2luZy5odHRwLnYxYWxwaGFCDFRyaWdnZXJQcm90b1ABogIDQ05IqgIkQ2FwYWJpbGl0aWVzLk5ldHdvcmtpbmcuSHR0cC5WMWFscGhhygIkQ2FwYWJpbGl0aWVzXE5ldHdvcmtpbmdcSHR0cFxWMWFscGhh4gIwQ2FwYWJpbGl0aWVzXE5ldHdvcmtpbmdcSHR0cFxWMWFscGhhXEdQQk1ldGFkYXRh6gInQ2FwYWJpbGl0aWVzOjpOZXR3b3JraW5nOjpIdHRwOjpWMWFscGhhYgZwcm90bzM", [file_tools_generator_v1alpha_cre_metadata]);
+var ConfigSchema = /* @__PURE__ */ messageDesc(file_capabilities_networking_http_v1alpha_trigger, 0);
+var PayloadSchema = /* @__PURE__ */ messageDesc(file_capabilities_networking_http_v1alpha_trigger, 1);
 var KeyType;
 (function(KeyType2) {
   KeyType2[KeyType2["UNSPECIFIED"] = 0] = "UNSPECIFIED";
   KeyType2[KeyType2["ECDSA_EVM"] = 1] = "ECDSA_EVM";
 })(KeyType || (KeyType = {}));
+
+class HTTPCapability {
+  static CAPABILITY_ID = "http-trigger@1.0.0-alpha";
+  static CAPABILITY_NAME = "http-trigger";
+  static CAPABILITY_VERSION = "1.0.0-alpha";
+  trigger(config) {
+    const capabilityId = HTTPCapability.CAPABILITY_ID;
+    return new HTTPTrigger(config, capabilityId, "Trigger");
+  }
+}
+
+class HTTPTrigger {
+  _capabilityId;
+  _method;
+  config;
+  constructor(config, _capabilityId, _method) {
+    this._capabilityId = _capabilityId;
+    this._method = _method;
+    this.config = config.$typeName ? config : fromJson(ConfigSchema, config);
+  }
+  capabilityId() {
+    return this._capabilityId;
+  }
+  method() {
+    return this._method;
+  }
+  outputSchema() {
+    return PayloadSchema;
+  }
+  configAsAny() {
+    return anyPack(ConfigSchema, this.config);
+  }
+  adapt(rawOutput) {
+    return rawOutput;
+  }
+}
 var file_capabilities_scheduler_cron_v1_trigger = /* @__PURE__ */ fileDesc("CixjYXBhYmlsaXRpZXMvc2NoZWR1bGVyL2Nyb24vdjEvdHJpZ2dlci5wcm90bxIeY2FwYWJpbGl0aWVzLnNjaGVkdWxlci5jcm9uLnYxIhoKBkNvbmZpZxIQCghzY2hlZHVsZRgBIAEoCSJHCgdQYXlsb2FkEjwKGHNjaGVkdWxlZF9leGVjdXRpb25fdGltZRgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiNQoNTGVnYWN5UGF5bG9hZBIgChhzY2hlZHVsZWRfZXhlY3V0aW9uX3RpbWUYASABKAk6AhgBMvUBCgRDcm9uElwKB1RyaWdnZXISJi5jYXBhYmlsaXRpZXMuc2NoZWR1bGVyLmNyb24udjEuQ29uZmlnGicuY2FwYWJpbGl0aWVzLnNjaGVkdWxlci5jcm9uLnYxLlBheWxvYWQwARJzCg1MZWdhY3lUcmlnZ2VyEiYuY2FwYWJpbGl0aWVzLnNjaGVkdWxlci5jcm9uLnYxLkNvbmZpZxotLmNhcGFiaWxpdGllcy5zY2hlZHVsZXIuY3Jvbi52MS5MZWdhY3lQYXlsb2FkIgmIAgGKtRgCCAEwARoagrUYFggBEhJjcm9uLXRyaWdnZXJAMS4wLjBCzQEKImNvbS5jYXBhYmlsaXRpZXMuc2NoZWR1bGVyLmNyb24udjFCDFRyaWdnZXJQcm90b1ABogIDQ1NDqgIeQ2FwYWJpbGl0aWVzLlNjaGVkdWxlci5Dcm9uLlYxygIeQ2FwYWJpbGl0aWVzXFNjaGVkdWxlclxDcm9uXFYx4gIqQ2FwYWJpbGl0aWVzXFNjaGVkdWxlclxDcm9uXFYxXEdQQk1ldGFkYXRh6gIhQ2FwYWJpbGl0aWVzOjpTY2hlZHVsZXI6OkNyb246OlYxYgZwcm90bzM", [file_google_protobuf_timestamp, file_tools_generator_v1alpha_cre_metadata]);
 var ConfigSchema2 = /* @__PURE__ */ messageDesc(file_capabilities_scheduler_cron_v1_trigger, 0);
 var PayloadSchema2 = /* @__PURE__ */ messageDesc(file_capabilities_scheduler_cron_v1_trigger, 1);
@@ -9915,18 +9954,15 @@ var prepareReportRequest = (hexEncodedPayload, reportEncoder = EVM_DEFAULT_REPOR
   encodedPayload: hexToBase64(hexEncodedPayload),
   ...reportEncoder
 });
-var decodeJson = (input) => {
-  const decoder = new TextDecoder("utf-8");
-  const textBody = decoder.decode(input);
-  return JSON.parse(textBody);
-};
-function json(responseOrFn) {
+function text(responseOrFn) {
   if (typeof responseOrFn === "function") {
     return {
-      result: () => json(responseOrFn().result)
+      result: () => text(responseOrFn().result)
     };
+  } else {
+    const decoder = new TextDecoder("utf-8");
+    return decoder.decode(responseOrFn.body).trim();
   }
-  return decodeJson(responseOrFn.body);
 }
 function ok(responseOrFn) {
   if (typeof responseOrFn === "function") {
@@ -14118,8 +14154,8 @@ function simpleDescriptor(agg) {
     }
   });
 }
-function median() {
-  return new ConsensusFieldAggregation(simpleDescriptor(AggregationType.MEDIAN));
+function identical() {
+  return new ConsensusFieldAggregation(simpleDescriptor(AggregationType.IDENTICAL));
 }
 
 class ConsensusFieldAggregation {
@@ -14760,8 +14796,8 @@ var ZodIssueCode = util.arrayToEnum([
   "not_finite"
 ]);
 var quotelessJson = (obj) => {
-  const json2 = JSON.stringify(obj, null, 2);
-  return json2.replace(/"([^"]+)":/g, "$1:");
+  const json = JSON.stringify(obj, null, 2);
+  return json.replace(/"([^"]+)":/g, "$1:");
 };
 
 class ZodError extends Error {
@@ -20263,65 +20299,78 @@ function getArrayComponents(type) {
   const matches = type.match(/^(.*)\[(\d+)?\]$/);
   return matches ? [matches[2] ? Number(matches[2]) : null, matches[1]] : undefined;
 }
-var videoSchema = exports_external.object({
-  videoId: exports_external.string(),
-  recipient: exports_external.string()
-});
 var configSchema = exports_external.object({
   schedule: exports_external.string(),
-  youtubeApiBaseUrl: exports_external.string(),
+  apiBaseUrl: exports_external.string(),
   chainSelector: exports_external.string(),
-  reporterAddress: exports_external.string(),
-  jobId: exports_external.string(),
-  gasLimit: exports_external.string(),
-  videos: exports_external.array(videoSchema).min(1)
+  gasLimit: exports_external.string()
 });
-var youtubeResponseSchema = exports_external.object({
-  items: exports_external.array(exports_external.object({ statistics: exports_external.object({ viewCount: exports_external.string() }) })).min(1)
+var batchSchema = exports_external.object({
+  dateKey: exports_external.string(),
+  chainId: exports_external.number(),
+  generatedAt: exports_external.string(),
+  jobs: exports_external.array(exports_external.object({
+    jobId: exports_external.number(),
+    reporterAddress: exports_external.string(),
+    recipients: exports_external.array(exports_external.object({
+      wallet: exports_external.string(),
+      cumulativeViews: exports_external.number()
+    }))
+  }))
 });
-var onCronTrigger = (runtime2) => {
+var settle = (runtime2) => {
   const cfg = runtime2.config;
   const httpClient = new ClientCapability2;
   const evmClient = new ClientCapability(BigInt(cfg.chainSelector));
-  const apiKey = runtime2.getSecret({ id: "YOUTUBE_API_KEY" }).result().value;
+  const apiKey = runtime2.getSecret({ id: "DISTRO_API_KEY" }).result().value;
   if (!apiKey)
-    throw new Error("YOUTUBE_API_KEY secret is empty");
-  const recipients = [];
-  const cumulativeViews = [];
-  for (const video of cfg.videos) {
-    const url = `${cfg.youtubeApiBaseUrl}?part=statistics&id=${video.videoId}&key=${apiKey}`;
-    const fetchViews = (sendRequester) => {
-      const response = sendRequester.sendRequest({ url, method: "GET" }).result();
-      if (!ok(response)) {
-        throw new Error(`YouTube HTTP ${response.statusCode} for video ${video.videoId}`);
-      }
-      const data = youtubeResponseSchema.parse(json(response));
-      return { views: Number(data.items[0].statistics.viewCount) };
-    };
-    const consensus = ConsensusAggregationByFields({ views: median });
-    const { views } = httpClient.sendRequest(runtime2, fetchViews, consensus)().result();
-    recipients.push(video.recipient);
-    cumulativeViews.push(BigInt(Math.trunc(views)));
-    runtime2.log(`Video ${video.videoId} -> ${video.recipient}: ${views} views`);
+    throw new Error("DISTRO_API_KEY secret is empty");
+  const url = `${cfg.apiBaseUrl}/cre/batch`;
+  const fetchBatch = (req) => {
+    const response = req.sendRequest({ url, method: "GET", headers: { "x-cre-api-key": apiKey } }).result();
+    if (!ok(response)) {
+      throw new Error(`Distro API HTTP ${response.statusCode}`);
+    }
+    return { body: text(response) };
+  };
+  const consensus = ConsensusAggregationByFields({ body: identical });
+  const { body } = httpClient.sendRequest(runtime2, fetchBatch, consensus)().result();
+  const batch = batchSchema.parse(JSON.parse(body));
+  runtime2.log(`Batch ${batch.dateKey}: ${batch.jobs.length} job(s)`);
+  let recorded = 0;
+  for (const job of batch.jobs) {
+    if (job.recipients.length === 0) {
+      runtime2.log(`Job ${job.jobId}: no recipients, skipping`);
+      continue;
+    }
+    const recipients = job.recipients.map((r) => r.wallet);
+    const views = job.recipients.map((r) => BigInt(Math.trunc(r.cumulativeViews)));
+    const encoded = encodeAbiParameters2(parseAbiParameters2("uint256, address[], uint256[]"), [
+      BigInt(job.jobId),
+      recipients,
+      views
+    ]);
+    const signedReport = runtime2.report(prepareReportRequest(encoded)).result();
+    const writeResult = evmClient.writeReport(runtime2, {
+      receiver: job.reporterAddress,
+      report: signedReport,
+      gasConfig: { gasLimit: cfg.gasLimit }
+    }).result();
+    const txHash = writeResult.txHash ? bytesToHex3(writeResult.txHash) : "(none)";
+    runtime2.log(`Job ${job.jobId}: ${recipients.length} recipient(s) -> tx ${txHash} status=${writeResult.txStatus}`);
+    recorded++;
   }
-  const encodedPayload = encodeAbiParameters2(parseAbiParameters2("uint256, address[], uint256[]"), [
-    BigInt(cfg.jobId),
-    recipients,
-    cumulativeViews
-  ]);
-  const signedReport = runtime2.report(prepareReportRequest(encodedPayload)).result();
-  const writeResult = evmClient.writeReport(runtime2, {
-    receiver: cfg.reporterAddress,
-    report: signedReport,
-    gasConfig: { gasLimit: cfg.gasLimit }
-  }).result();
-  const txHash = writeResult.txHash ? bytesToHex3(writeResult.txHash) : "(none)";
-  runtime2.log(`Recorded views for job ${cfg.jobId} — tx ${txHash} status=${writeResult.txStatus}`);
-  return txHash;
+  return `recorded ${recorded}/${batch.jobs.length} job(s) for ${batch.dateKey}`;
 };
+var onCronTrigger = (runtime2) => settle(runtime2);
+var onHttpTrigger = (runtime2, _payload) => settle(runtime2);
 var initWorkflow = (config) => {
   const cron = new CronCapability;
-  return [handler(cron.trigger({ schedule: config.schedule }), onCronTrigger)];
+  const http3 = new HTTPCapability;
+  return [
+    handler(cron.trigger({ schedule: config.schedule }), onCronTrigger),
+    handler(http3.trigger({ authorizedKeys: [] }), onHttpTrigger)
+  ];
 };
 async function main() {
   const runner = await Runner.newRunner({

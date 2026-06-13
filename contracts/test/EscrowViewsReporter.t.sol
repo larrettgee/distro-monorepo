@@ -12,7 +12,8 @@ contract EscrowViewsReporterTest is Test {
     MockERC20 internal token;
 
     address internal brand = makeAddr("brand");
-    address internal forwarder = makeAddr("forwarder");
+    address internal forwarder = makeAddr("forwarder"); // primary (e.g. prod) forwarder
+    address internal forwarder2 = makeAddr("forwarder2"); // secondary (e.g. sim) forwarder
     address internal clipperA = makeAddr("clipperA");
     address internal clipperB = makeAddr("clipperB");
 
@@ -23,7 +24,10 @@ contract EscrowViewsReporterTest is Test {
     function setUp() public {
         escrow = new DistroEscrow();
         token = new MockERC20("USD Coin", "USDC", 6);
-        reporter = new EscrowViewsReporter(address(escrow), forwarder);
+        address[] memory forwarders = new address[](2);
+        forwarders[0] = forwarder;
+        forwarders[1] = forwarder2;
+        reporter = new EscrowViewsReporter(address(escrow), forwarders);
 
         token.mint(brand, BUDGET);
         vm.startPrank(brand);
@@ -66,6 +70,22 @@ contract EscrowViewsReporterTest is Test {
 
         assertEq(escrow.owed(jobId, clipperA), 240e6);
         assertEq(escrow.recordedViews(jobId, clipperA), 120_000);
+    }
+
+    function test_OnReport_AcceptsEitherForwarder() public {
+        assertTrue(reporter.isForwarder(forwarder));
+        assertTrue(reporter.isForwarder(forwarder2));
+
+        address[] memory recipients = new address[](1);
+        uint256[] memory views = new uint256[](1);
+        recipients[0] = clipperA;
+        views[0] = 100_000;
+
+        // Delivered via the secondary (e.g. sim) forwarder — also accepted.
+        vm.prank(forwarder2);
+        reporter.onReport("", abi.encode(jobId, recipients, views));
+
+        assertEq(escrow.owed(jobId, clipperA), 200e6);
     }
 
     function test_SupportsInterface() public view {

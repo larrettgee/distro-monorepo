@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# distro-app
 
-## Getting Started
+The Distro web app — the marketplace UI for the [onchain clipping marketplace](../README.md).
+Brands browse and fund campaigns; clippers connect socials, submit clips, and claim payouts.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) · **React 19** · **Tailwind v4**
+- **Privy** for auth + embedded wallets, **wagmi/viem** for on-chain calls (fund a campaign, claim payouts) on **Arc testnet**
+- **@tanstack/react-query** for server state, **@worldcoin/idkit** for World ID verification
+- **Cloudflare Stream** for source-content upload, playback, and thumbnails
+
+## Develop
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app talks to the NestJS API through a same-origin proxy: requests to
+`/api/backend/*` are rewritten to the backend (`API_URL`, default
+`http://localhost:3001`) in [`next.config.ts`](next.config.ts), so **the API must be
+running** (see [`../api`](../api)).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Public (browser-exposed) vars in `.env.local`:
 
-## Learn More
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_PRIVY_APP_ID` | Privy app id for auth + embedded wallets |
+| `NEXT_PUBLIC_CLOUDFLARE_STREAM_SUBDOMAIN` | Optional — customer subdomain for direct MP4 downloads |
+| `API_URL` | Backend origin for the `/api/backend/*` rewrite (default `http://localhost:3001`) |
 
-To learn more about Next.js, take a look at the following resources:
+Server-only Cloudflare Stream credentials (`CLOUDFLARE_ACCOUNT_ID`,
+`CLOUDFLARE_STREAM_API_TOKEN`) power the upload/download API routes under
+`app/api/stream` and `app/api/uploads`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/            App Router routes (/, /trending, /leaderboard, /account,
+                /socials, /dashboard, /campaign/[id]) + stream/upload API routes
+components/     UI — marketplace, campaign, clipper, account, brand, create flow
+lib/            api client + hooks, wagmi/chain config, escrow ABI, stream helpers
+```
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Dev server with HMR |
+| `npm run build` | Production build |
+| `npm start` | Serve the production build |
+| `npm run lint` | ESLint |

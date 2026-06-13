@@ -10,18 +10,21 @@ interface IDistroEscrow {
 
 /**
  * @title EscrowViewsReporter
- * @notice CRE consumer that relays YouTube view reports into DistroEscrow.
+ * @notice CRE consumer that relays view reports into DistroEscrow.
  *
  * A Chainlink CRE workflow fetches cumulative video views, signs a report, and
- * submits it through the KeystoneForwarder. The forwarder calls `onReport`
- * here; this contract decodes the report and forwards it to
- * `DistroEscrow.recordViews`.
+ * submits it through a KeystoneForwarder. The forwarder calls `onReport` here;
+ * this contract decodes the report and forwards it to `DistroEscrow.recordViews`.
  *
- * Wiring: deploy this contract, then have the brand create the escrow job with
- * this contract as the `operator`:
- *   DistroEscrow.createJob(reporterAddress, token, pricePerThousandViews, budget)
- * Because the escrow checks `msg.sender == job.operator`, only reports relayed
- * through this contract (and only from the trusted forwarder) can record views.
+ * Multiple forwarders can be trusted, which lets one reporter serve both local
+ * `cre simulate --broadcast` runs (mock forwarder) and the deployed DON
+ * (production forwarder) without redeploying. On a real (mainnet) deployment,
+ * trust only the production forwarder.
+ *
+ * Wiring: deploy this contract, then create the escrow job with this contract
+ * as the `operator` (e.g. `createJobNative(reporter, pricePerThousandViews)`).
+ * The escrow checks `msg.sender == job.operator`, so only reports relayed
+ * through this contract — and only from a trusted forwarder — can record views.
  *
  * Report payload encoding — must match the workflow's `encodeAbiParameters`:
  *   abi.encode(uint256 jobId, address[] recipients, uint256[] cumulativeViews)
@@ -30,21 +33,28 @@ contract EscrowViewsReporter is IReceiver, IERC165 {
     /// @notice Escrow this reporter feeds.
     IDistroEscrow public immutable escrow;
 
-    /// @notice KeystoneForwarder authorized to deliver CRE reports.
-    address public immutable forwarder;
+    /// @notice KeystoneForwarders authorized to deliver CRE reports.
+    mapping(address => bool) public isForwarder;
 
     event ViewsReported(uint256 indexed jobId, uint256 recipientCount);
 
     error UnauthorizedForwarder(address caller);
+    error InvalidAddress();
+    error NoForwarders();
 
-    constructor(address escrow_, address forwarder_) {
+    constructor(address escrow_, address[] memory forwarders_) {
+        if (escrow_ == address(0)) revert InvalidAddress();
+        if (forwarders_.length == 0) revert NoForwarders();
         escrow = IDistroEscrow(escrow_);
-        forwarder = forwarder_;
+        for (uint256 i = 0; i < forwarders_.length; i++) {
+            if (forwarders_[i] == address(0)) revert InvalidAddress();
+            isForwarder[forwarders_[i]] = true;
+        }
     }
 
     /// @inheritdoc IReceiver
     function onReport(bytes calldata, bytes calldata report) external {
-        if (msg.sender != forwarder) revert UnauthorizedForwarder(msg.sender);
+        if (!isForwarder[msg.sender]) revert UnauthorizedForwarder(msg.sender);
 
         (uint256 jobId, address[] memory recipients, uint256[] memory views) =
             abi.decode(report, (uint256, address[], uint256[]));

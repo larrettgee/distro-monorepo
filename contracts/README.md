@@ -26,12 +26,11 @@ Escrow for a clipping marketplace. One deployment holds many independent jobs.
 | Contract | Address |
 | --- | --- |
 | DistroEscrow | [`0x85ea0a0843169f5BcfEafD295790179964cd5320`](https://testnet.arcscan.app/address/0x85ea0a0843169f5BcfEafD295790179964cd5320) |
-| EscrowViewsReporter — production | [`0x78203f4Dd20968808cFD05A094e9cCfF4E781089`](https://testnet.arcscan.app/address/0x78203f4Dd20968808cFD05A094e9cCfF4E781089) |
-| EscrowViewsReporter — staging/sim | [`0xCE430789Ddf7c55cd7b99E8B2D596e75c140a74d`](https://testnet.arcscan.app/address/0xCE430789Ddf7c55cd7b99E8B2D596e75c140a74d) |
+| EscrowViewsReporter (multi-forwarder) | [`0x716f3b0b885Cf0Edd1Be17E1DF62560acbCE212F`](https://testnet.arcscan.app/address/0x716f3b0b885Cf0Edd1Be17E1DF62560acbCE212F) |
 
-`EscrowViewsReporter` is the CRE operator adapter and **must trust the right KeystoneForwarder**: the production DON forwarder is `0x76c9cf548b4179F8901cda1f8623568b58215E62`, but `cre workflow simulate --broadcast` delivers through the mock forwarder `0x6E9EE680ef59ef64Aa8C7371279c27E496b5eDc1` — hence separate prod/staging reporters. The forwarder ERC-165-checks the receiver before delivering, so the reporter implements `supportsInterface`.
+`EscrowViewsReporter` is the CRE operator adapter (set as a job's `operator`). It trusts a **set** of KeystoneForwarders, so one reporter serves both the deployed DON (production forwarder `0x76c9cf548b4179F8901cda1f8623568b58215E62`) and local `cre workflow simulate --broadcast` (mock forwarder `0x6E9EE680ef59ef64Aa8C7371279c27E496b5eDc1`). The forwarder ERC-165-checks the receiver before delivering, so the reporter implements `supportsInterface`. On mainnet, trust only the production forwarder.
 
-Native-funded dummy jobs: id `3` (production reporter) and id `2` (staging reporter, used in the verified end-to-end simulation).
+> Earlier single-forwarder reporters (`0x78203f…` prod, `0xCE43…` sim) are superseded by the multi-forwarder one above.
 
 ## Setup
 

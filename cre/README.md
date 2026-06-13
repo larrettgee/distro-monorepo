@@ -1,102 +1,98 @@
 # distro-cre
 
 Chainlink CRE workflow that acts as the **operator** for `DistroEscrow`. On a
-schedule it reads cumulative YouTube view counts and records them onchain so
-clippers accrue payouts.
+daily cron it pulls the aggregated payout batch from the Distro API and records
+cumulative views on-chain so clippers accrue payouts.
 
 ## How it fits together
 
 ```
-cron tick
-  └─ workflow fetches viewCount per video (YouTube Data API v3, DON-median consensus)
-       └─ builds (jobId, recipients[], cumulativeViews[])
-            └─ runtime.report()  ──►  KeystoneForwarder  ──►  EscrowViewsReporter.onReport()
-                                                                   └─ DistroEscrow.recordViews()
+daily cron tick
+  └─ workflow GETs the Distro API /cre/batch  (DON identical-consensus on the body)
+       │     (the API refreshes YouTube views + sums views per clipper wallet,
+       │      and persists one snapshot per UTC day so every DON node sees the same data)
+       └─ for each job: builds (jobId, recipients[], cumulativeViews[])
+            └─ runtime.report() ──► KeystoneForwarder ──► EscrowViewsReporter.onReport()
+                                                              └─ DistroEscrow.recordViews()
 ```
 
-CRE onchain writes can't call an arbitrary function directly — they deliver a
-signed report to the `KeystoneForwarder`, which calls `onReport` on a receiver.
-So the receiver is the thin `EscrowViewsReporter` adapter (in `../contracts`),
-and it is set as the job's `operator`. View counts are reported **cumulatively**,
-matching `DistroEscrow.recordViews`, which credits only the per-recipient delta.
+The API owns YouTube fetching + per-wallet aggregation; the CRE owns the
+trustless on-chain write. View counts are **cumulative per recipient**, matching
+`DistroEscrow.recordViews`, which credits only the per-recipient delta. Each
+job's `reporterAddress` (its on-chain operator) comes from the batch, so one cron
+run can settle many campaigns.
+
+CRE writes can't call an arbitrary function directly — they deliver a signed
+report to the `KeystoneForwarder`, which ERC-165-checks the receiver then calls
+`onReport`. The receiver is the thin `EscrowViewsReporter` adapter (`../contracts`),
+set as each job's `operator`.
 
 ## Target network
 
 Arc testnet (Circle), chainId **5042002**, CRE selector `arc-testnet`
-(numeric `3034092155422581607`). Forwarder addresses:
+(numeric `3034092155422581607`). KeystoneForwarder:
 
-- Production: `0x76c9cf548b4179F8901cda1f8623568b58215E62`
+- Production DON: `0x76c9cf548b4179F8901cda1f8623568b58215E62`
 - Simulation (`--broadcast`): `0x6E9EE680ef59ef64Aa8C7371279c27E496b5eDc1`
+
+The reporter trusts both forwarders, so one reporter serves prod + sim.
 
 ## Deployed (Arc testnet)
 
 | Contract | Address |
 | --- | --- |
 | DistroEscrow | `0x85ea0a0843169f5BcfEafD295790179964cd5320` |
-| EscrowViewsReporter — production (forwarder `0x76c9…`) | `0x78203f4Dd20968808cFD05A094e9cCfF4E781089` |
-| EscrowViewsReporter — staging/sim (forwarder `0x6E9E…`) | `0xCE430789Ddf7c55cd7b99E8B2D596e75c140a74d` |
+| EscrowViewsReporter (multi-forwarder) | `0x716f3b0b885Cf0Edd1Be17E1DF62560acbCE212F` |
 
-`config.staging.json` → staging reporter, dummy `jobId 2` (used in the verified
-`--broadcast` simulation). `config.production.json` → production reporter, dummy
-`jobId 3`. Set real `videos` entries to record actual views.
+A campaign's `operatorAddress` (set on `createJob`) must be this reporter. It
+trusts both the production forwarder `0x76c9…` (deployed DON) and the mock
+forwarder `0x6E9E…` (`cre simulate --broadcast`), so the same campaigns work for
+the live demo and the deployed DON.
 
-**Forwarder note:** the reporter trusts exactly one KeystoneForwarder. The
-production DON uses `0x76c9cf548b4179F8901cda1f8623568b58215E62`; `cre workflow
-simulate --broadcast` delivers via the mock forwarder
-`0x6E9EE680ef59ef64Aa8C7371279c27E496b5eDc1`. That's why there are two reporters.
+## Config
 
-## Verified end-to-end (simulation)
+`config.{staging,production}.json`:
 
-`cre workflow simulate youtube-views --target staging-settings --broadcast` ran
-the full path: fetch YouTube views → DON median consensus → signed report →
-mock forwarder → `EscrowViewsReporter.onReport` → `DistroEscrow.recordViews`,
-emitting `ViewsRecorded` on-chain (payout correctly capped at the job budget).
+| field | meaning |
+| --- | --- |
+| `schedule` | cron (default `0 0 0 * * *`, daily 00:00 UTC) |
+| `apiBaseUrl` | Distro API base (staging → `http://localhost:3001`) |
+| `chainSelector` | `3034092155422581607` (Arc) |
+| `gasLimit` | per-write gas |
 
-## One-time wiring
-
-1. Deploy the adapter (from `../contracts`):
-   ```bash
-   ESCROW_ADDRESS=0x85ea0a0843169f5BcfEafD295790179964cd5320 \
-   FORWARDER_ADDRESS=0x76c9cf548b4179F8901cda1f8623568b58215E62 \
-   forge script script/DeployEscrowViewsReporter.s.sol:DeployEscrowViewsReporter \
-     --rpc-url $ARC_RPC_URL --broadcast
-   ```
-2. Create the escrow job with the adapter as operator (native/USDC budget on Arc):
-   `DistroEscrow.createJobNative{value: budget}(reporterAddress, pricePerThousandViews)`.
-3. Fill `youtube-views/config.*.json`:
-   - `reporterAddress` → the deployed adapter
-   - `jobId` → the id returned by `createJobNative`
-   - `videos` → `{ videoId, recipient }` pairs (recipient = clipper wallet)
+Secret `DISTRO_API_KEY` (→ env `DISTRO_API_KEY_VAR`) is the `x-cre-api-key` value;
+it must match `CRE_API_KEY` in `../api/.env`.
 
 ## Setup
 
 ```bash
 cd youtube-views && bun install && cd ..   # runs cre-setup (WASM tooling)
-cp .env.example .env                        # add CRE_ETH_PRIVATE_KEY + YOUTUBE_API_KEY_VAR
+cp .env.example .env                        # set CRE_ETH_PRIVATE_KEY + DISTRO_API_KEY_VAR
 ```
 
-Requires the CRE CLI (≥ v1.0.7) and TS SDK ≥ v1.3.1. Install the CLI per
-https://docs.chain.link/cre/getting-started/cli-installation.
+Requires the CRE CLI (≥ v1.0.7) and TS SDK ≥ v1.3.1.
 
 ## Simulate
 
-Run from this directory (where `project.yaml` lives):
+Run from this directory (has `project.yaml`). The cron fires once immediately.
 
 ```bash
-cre workflow simulate youtube-views --target staging-settings
+# Needs the Distro API reachable at apiBaseUrl with a matching CRE_API_KEY.
+cre workflow simulate youtube-views --target staging-settings --broadcast \
+  --non-interactive --trigger-index 0 -e .env
 ```
 
-The cron trigger fires once immediately. To also execute the onchain write
-against the mock forwarder (needs a funded wallet + the simulation forwarder in
-the adapter):
-
-```bash
-cre workflow simulate youtube-views --target staging-settings --broadcast
-```
+**Verified end-to-end:** with a stubbed `/cre/batch` returning job 6, a
+`--broadcast` run executed GET batch → identical-consensus → signed report →
+mock forwarder → `EscrowViewsReporter.onReport` → `DistroEscrow.recordViews(6, …)`,
+landing `recordedViews=10000`, `owed=0.02` native on-chain.
 
 ## Deploy (testnet)
 
 ```bash
-cre secrets create youtube-views --target production-settings   # upload YOUTUBE_API_KEY to Vault DON
+cre secrets create youtube-views --target production-settings   # upload DISTRO_API_KEY to Vault DON
 cre workflow deploy youtube-views --target production-settings
 ```
+
+> Note: the workflow directory is still named `youtube-views` (historical); it no
+> longer calls YouTube directly. Registry names are `distro-record-views-*`.
